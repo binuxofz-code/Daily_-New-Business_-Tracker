@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { Users, MapPin, Briefcase, Calendar, TrendingUp, Settings } from 'lucide-react';
+import { Users, MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -16,7 +16,7 @@ export default function AdminDashboard({ user, onLogout }) {
     // User Management State
     const [allUsers, setAllUsers] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
-    const [editForm, setEditForm] = useState({ zone: '', branch: '' });
+    const [editForm, setEditForm] = useState({ zone: '', branch: '', managed_locations: '[]' });
 
     useEffect(() => {
         if (tab === 'users') {
@@ -63,10 +63,11 @@ export default function AdminDashboard({ user, onLogout }) {
 
     const handleEditUser = (u) => {
         setEditingUser(u.id);
+        const locs = u.managed_locations || '[]';
         setEditForm({
             zone: u.zone || '',
             branch: u.branch || '',
-            managed_locations: u.managed_locations || '[]'
+            managed_locations: locs
         });
     };
 
@@ -97,10 +98,8 @@ export default function AdminDashboard({ user, onLogout }) {
         datasets: [{
             label: 'New Business (LKR)',
             data: values,
-            backgroundColor: 'rgba(99, 102, 241, 0.6)',
-            borderColor: 'rgba(99, 102, 241, 1)',
-            borderWidth: 1,
-            borderRadius: 8,
+            backgroundColor: '#3b82f6', // Blue 500
+            borderRadius: 4,
         }],
     };
 
@@ -109,21 +108,16 @@ export default function AdminDashboard({ user, onLogout }) {
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: (context) => formatCurrency(context.raw)
-                }
-            }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: { color: '#94a3b8' }
+                grid: { color: '#f3f4f6' },
+                ticks: { color: '#6b7280' }
             },
             x: {
                 grid: { display: false },
-                ticks: { color: '#94a3b8' }
+                ticks: { color: '#6b7280' }
             }
         }
     };
@@ -132,146 +126,153 @@ export default function AdminDashboard({ user, onLogout }) {
     const activeAgents = tab === 'overview' ? data.length : data.reduce((acc, curr) => acc + (curr.agents || 0), 0);
 
     return (
-        <div className="dashboard-container">
-            {/* Sidebar */}
-            <aside className="sidebar">
-                <div style={{ paddingBottom: '2rem', borderBottom: '1px solid var(--border)', marginBottom: '2rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', borderRadius: '8px' }}></div>
-                        Tracker<span style={{ fontWeight: 400, opacity: 0.5 }}>Pro</span>
-                    </div>
+        <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+            {/* Header */}
+            <header className="dashboard-header">
+                <div>
+                    <h1 className="text-h1">Daily Business Tracker</h1>
+                    <p className="text-muted">Administrator Dashboard</p>
                 </div>
 
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <button onClick={() => setTab('overview')} className={tab === 'overview' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
-                        <Users size={18} style={{ marginRight: '0.75rem' }} /> Overview
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eef2ff', padding: '0.5rem 1rem', borderRadius: '20px', color: '#4f46e5' }}>
+                        <Shield size={16} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>System Admin</span>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Administrator</div>
+                    </div>
+
+                    <button onClick={onLogout} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <LogOut size={16} /> Logout
                     </button>
+                </div>
+            </header>
 
-                    {user.role !== 'zonal_manager' && (
-                        <button onClick={() => setTab('zone')} className={tab === 'zone' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
-                            <MapPin size={18} style={{ marginRight: '0.75rem' }} /> Zone Performance
-                        </button>
-                    )}
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
 
-                    <button onClick={() => setTab('branch')} className={tab === 'branch' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
-                        <Briefcase size={18} style={{ marginRight: '0.75rem' }} /> Branch Performance
+                {/* Tabs */}
+                <div className="nav-tabs">
+                    <button onClick={() => setTab('overview')} className={`nav-tab ${tab === 'overview' ? 'active' : ''}`}>
+                        <BarChart2 size={18} /> Overview
                     </button>
-
-                    {/* New Manage Users Tab */}
+                    <button onClick={() => setTab('zone')} className={`nav-tab ${tab === 'zone' ? 'active' : ''}`}>
+                        <MapPin size={18} /> Zone Performance
+                    </button>
+                    <button onClick={() => setTab('branch')} className={`nav-tab ${tab === 'branch' ? 'active' : ''}`}>
+                        <Briefcase size={18} /> Branch Performance
+                    </button>
                     {(user.role === 'admin' || user.role === 'head') && (
-                        <button onClick={() => setTab('users')} className={tab === 'users' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%', marginTop: 'auto' }}>
-                            <Settings size={18} style={{ marginRight: '0.75rem' }} /> Manage Users
+                        <button onClick={() => setTab('users')} className={`nav-tab ${tab === 'users' ? 'active' : ''}`}>
+                            <Settings size={18} /> Manage Users
                         </button>
                     )}
-                </nav>
-            </aside>
+                </div>
 
-            {/* Main Area */}
-            <main className="main-content">
-                <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                            {tab === 'users' ? 'Manage Users' : 'Dashboard'}
-                        </h1>
-                        <p style={{ color: 'var(--text-muted)' }}>Welcome back, {user.username}</p>
+                {tab !== 'users' && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <Calendar size={18} color="#6b7280" />
+                            <input
+                                type="date"
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                                style={{ border: 'none', outline: 'none', fontSize: '0.9rem', color: '#374151' }}
+                            />
+                        </div>
                     </div>
-
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        {tab !== 'users' && (
-                            <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Calendar size={16} color="var(--primary)" />
-                                <input
-                                    type="date"
-                                    value={filterDate}
-                                    onChange={(e) => setFilterDate(e.target.value)}
-                                    style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontFamily: 'inherit' }}
-                                />
-                            </div>
-                        )}
-                        <button className="btn-ghost" onClick={onLogout}>Logout</button>
-                    </div>
-                </header>
+                )}
 
                 {tab === 'users' ? (
-                    <div className="glass-card animate-fade-in" style={{ padding: '2rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>All Users</h3>
+                    <div className="clean-card animate-fade-in">
+                        <div className="card-header-accent">
+                            <h2 className="text-h2">User Management</h2>
+                            <p className="text-muted">Manage system access, roles, and branch allocations</p>
+                        </div>
+
                         <div style={{ overflowX: 'auto' }}>
-                            <table className="premium-table">
+                            <table className="clean-table">
                                 <thead>
                                     <tr>
                                         <th>Username</th>
                                         <th>Role</th>
-                                        <th>Zone / Allocations</th>
-                                        <th>Detail / Branch</th>
+                                        <th>Allocations / Zone</th>
+                                        <th>Details / Branch</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {allUsers.map(u => (
                                         <tr key={u.id}>
-                                            <td style={{ fontWeight: 500 }}>{u.username}</td>
-                                            <td style={{ opacity: 0.7 }}>{u.role}</td>
+                                            <td style={{ fontWeight: 600 }}>{u.username}</td>
+                                            <td>
+                                                <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#f3f4f6', borderRadius: '4px', color: '#4b5563', textTransform: 'capitalize' }}>
+                                                    {u.role.replace('_', ' ')}
+                                                </span>
+                                            </td>
 
-                                            {/* Zone/Allocations Column */}
+                                            {/* Zone/Allocations */}
                                             <td>
                                                 {editingUser === u.id ? (
                                                     u.role === 'zonal_manager' ? (
-                                                        <div style={{ fontSize: '0.8rem' }}>
-                                                            <strong>Allocated Branches:</strong>
-                                                            <div style={{ maxHeight: '150px', overflowY: 'auto', margin: '0.5rem 0', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '4px' }}>
-                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations || '[]') : []).map((loc, idx) => (
-                                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                                        <div style={{ fontSize: '0.85rem' }}>
+                                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600 }}>Allocated Branches:</div>
+                                                            <div style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '0.5rem', marginBottom: '0.5rem', maxHeight: '120px', overflowY: 'auto' }}>
+                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).map((loc, idx) => (
+                                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', borderBottom: '1px dashed #f3f4f6' }}>
                                                                         <span>{loc.zone} - {loc.branch}</span>
-                                                                        <button type="button" onClick={() => {
-                                                                            const current = JSON.parse(editForm.managed_locations || '[]');
+                                                                        <button onClick={() => {
+                                                                            const current = JSON.parse(editForm.managed_locations);
                                                                             const newLocs = current.filter((_, i) => i !== idx);
                                                                             setEditForm({ ...editForm, managed_locations: JSON.stringify(newLocs) });
                                                                         }} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>×</button>
                                                                     </div>
                                                                 ))}
-                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations || '[]') : []).length === 0 && <span style={{ opacity: 0.5 }}>No allocations</span>}
+                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).length === 0 && <span style={{ opacity: 0.5 }}>No allocations</span>}
                                                             </div>
-                                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                                                <input placeholder="Zone" id={`new-zone-${u.id}`} className="glass-input" style={{ width: '60px', padding: '2px', fontSize: '0.7rem' }} />
-                                                                <input placeholder="Branch" id={`new-branch-${u.id}`} className="glass-input" style={{ width: '60px', padding: '2px', fontSize: '0.7rem' }} />
-                                                                <button type="button" onClick={() => {
-                                                                    const z = document.getElementById(`new-zone-${u.id}`).value;
-                                                                    const b = document.getElementById(`new-branch-${u.id}`).value;
+                                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                                <input id={`z-${u.id}`} placeholder="Zone" className="clean-input" style={{ padding: '0.25rem' }} />
+                                                                <input id={`b-${u.id}`} placeholder="Branch" className="clean-input" style={{ padding: '0.25rem' }} />
+                                                                <button onClick={() => {
+                                                                    const z = document.getElementById(`z-${u.id}`).value;
+                                                                    const b = document.getElementById(`b-${u.id}`).value;
                                                                     if (z && b) {
                                                                         const current = JSON.parse(editForm.managed_locations || '[]');
                                                                         current.push({ zone: z, branch: b });
                                                                         setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
-                                                                        document.getElementById(`new-zone-${u.id}`).value = '';
-                                                                        document.getElementById(`new-branch-${u.id}`).value = '';
+                                                                        document.getElementById(`z-${u.id}`).value = '';
+                                                                        document.getElementById(`b-${u.id}`).value = '';
                                                                     }
-                                                                }} style={{ fontSize: '0.7rem', background: '#6366f1', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', padding: '0 4px' }}>Add</button>
+                                                                }} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '0 0.5rem' }}>+</button>
                                                             </div>
                                                         </div>
                                                     ) : (
                                                         <input
-                                                            className="glass-input"
-                                                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
+                                                            className="clean-input"
                                                             value={editForm.zone}
                                                             onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                                                            placeholder="Zone"
                                                         />
                                                     )
                                                 ) : (
                                                     u.role === 'zonal_manager' ? (
-                                                        <div style={{ fontSize: '0.8rem' }}>
-                                                            {(u.managed_locations ? JSON.parse(u.managed_locations) : []).length} Branches Allocated
-                                                        </div>
+                                                        <span style={{ color: '#6b7280' }}>
+                                                            {(u.managed_locations ? JSON.parse(u.managed_locations).length : 0)} Branches
+                                                        </span>
                                                     ) : (u.zone || '-')
                                                 )}
                                             </td>
 
-                                            {/* Branch Column (Only for non-managers typically) */}
+                                            {/* Branch */}
                                             <td>
                                                 {editingUser === u.id && u.role !== 'zonal_manager' ? (
                                                     <input
-                                                        className="glass-input"
-                                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
+                                                        className="clean-input"
                                                         value={editForm.branch}
                                                         onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                                        placeholder="Branch"
                                                     />
                                                 ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
                                             </td>
@@ -279,11 +280,11 @@ export default function AdminDashboard({ user, onLogout }) {
                                             <td>
                                                 {editingUser === u.id ? (
                                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                        <button onClick={() => saveUser(u.id)} style={{ color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
-                                                        <button onClick={() => setEditingUser(null)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                                                        <button onClick={() => saveUser(u.id)} style={{ color: '#059669', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                                                        <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
                                                     </div>
                                                 ) : (
-                                                    <button onClick={() => handleEditUser(u)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button>
+                                                    <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
                                                 )}
                                             </td>
                                         </tr>
@@ -294,82 +295,60 @@ export default function AdminDashboard({ user, onLogout }) {
                     </div>
                 ) : (
                     <>
-                        {/* Global Stats */}
-                        <div className="stats-grid">
-                            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                <div style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '16px', color: 'var(--primary)' }}>
-                                    <TrendingUp size={32} />
-                                </div>
-                                <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Business</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatCurrency(totalBusiness)}</div>
+                        {/* KPI Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                            <div className="clean-card" style={{ padding: '1.5rem' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Total Business Today</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem' }}>
+                                    {formatCurrency(totalBusiness)}
                                 </div>
                             </div>
-
-                            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                <div style={{ padding: '1rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '16px', color: 'var(--secondary)' }}>
-                                    <Users size={32} />
-                                </div>
-                                <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Active Agents</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{activeAgents}</div>
+                            <div className="clean-card" style={{ padding: '1.5rem' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Active Units/Agents</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem' }}>
+                                    {activeAgents}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Chart Section */}
-                        <div className="glass-card animate-fade-in" style={{ padding: '2rem', marginBottom: '2rem', height: '400px' }}>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Performance Trends</h3>
+                        {/* Chart */}
+                        <div className="clean-card animate-fade-in" style={{ height: '400px', marginBottom: '2rem' }}>
+                            <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Performance Trends</h3>
                             {data.length > 0 ? (
                                 <Bar data={barData} options={chartOptions} />
                             ) : (
-                                <div className="flex-center" style={{ height: '100%', color: 'var(--text-muted)' }}>No data to display</div>
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No data available</div>
                             )}
                         </div>
 
-                        {/* Detailed Table */}
-                        <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.2s' }}>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Detailed Breakdown</h3>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table className="premium-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                            {tab === 'overview' && <th>Location</th>}
-                                            <th>{tab === 'overview' ? 'Status/Plan' : 'Agents Count'}</th>
-                                            <th>Total Business (LKR)</th>
+                        {/* Data Table */}
+                        <div className="clean-card animate-fade-in">
+                            <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Detailed Breakdown</h3>
+                            <table className="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
+                                        <th>{tab === 'overview' ? 'Plan' : 'Count'}</th>
+                                        <th>Business (LKR)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td style={{ fontWeight: 500 }}>
+                                                {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
+                                            </td>
+                                            <td style={{ color: '#6b7280' }}>
+                                                {tab === 'overview' ? (item.morning_plan || '-') : (item.agents + ' active')}
+                                            </td>
+                                            <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#059669' : '#374151' }}>
+                                                {formatCurrency(item.total_business || item.actual_business || 0)}
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.map((item, idx) => (
-                                            <tr key={idx}>
-                                                <td style={{ fontWeight: 500 }}>
-                                                    {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
-                                                </td>
-
-                                                {tab === 'overview' && (
-                                                    <td style={{ color: 'var(--text-muted)' }}>
-                                                        {item.zone} / {item.branch}
-                                                    </td>
-                                                )}
-
-                                                <td style={{ color: 'var(--text-muted)' }}>
-                                                    {tab === 'overview' ? (
-                                                        item.morning_plan || <span style={{ opacity: 0.5 }}>No Plan Set</span>
-                                                    ) : (
-                                                        item.agents + ' Active'
-                                                    )}
-                                                </td>
-
-                                                <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#10b981' : 'inherit' }}>
-                                                    {formatCurrency(item.total_business || item.actual_business || 0)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {data.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>No records found</td></tr>}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                    {data.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>No records</td></tr>}
+                                </tbody>
+                            </table>
                         </div>
                     </>
                 )}

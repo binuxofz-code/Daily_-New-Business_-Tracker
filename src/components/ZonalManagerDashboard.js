@@ -1,17 +1,17 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Save, Calendar, TrendingUp } from 'lucide-react';
+import { Briefcase, MapPin, Save, Calendar, BarChart2, Shield, LogOut, Sun, Moon } from 'lucide-react';
 
 export default function ZonalManagerDashboard({ user, onLogout }) {
+    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, summary
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [locations, setLocations] = useState([]);
-    const [records, setRecords] = useState({}); // { "ZoneA-Branch1": { morning_plan, actual_business } }
+    const [records, setRecords] = useState({});
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        // Parse locations assigned by admin
         try {
             const parsed = user.managed_locations ? JSON.parse(user.managed_locations) : [];
             setLocations(parsed);
@@ -27,8 +27,6 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
     const fetchRecords = async () => {
         setLoading(true);
         try {
-            // We fetch all records for this user for the date
-            // The API returns a list. We need to map them to our locations.
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
 
@@ -38,10 +36,6 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
                     const key = `${r.zone}-${r.branch}`;
                     recordsMap[key] = r;
                 });
-            } else if (data.id) {
-                // Single record fallback - rarely happens with new logic but good safety
-                const key = `${data.zone}-${data.branch}`;
-                recordsMap[key] = data;
             }
             setRecords(recordsMap);
         } catch (e) {
@@ -59,7 +53,7 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
                 ...prev[key],
                 [field]: value,
                 zone,
-                branch // Ensure we have these for saving
+                branch
             }
         }));
     };
@@ -67,8 +61,6 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Save each location's record
-            // Parallel requests might be okay for small number of branches (4-5)
             const promises = locations.map(loc => {
                 const key = `${loc.zone}-${loc.branch}`;
                 const record = records[key] || {};
@@ -88,8 +80,8 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
             });
 
             await Promise.all(promises);
-            alert('All records saved successfully!');
-            fetchRecords(); // Refresh
+            alert('Records saved successfully!');
+            fetchRecords();
         } catch (e) {
             alert('Error saving records');
         } finally {
@@ -102,64 +94,100 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
     };
 
     return (
-        <div className="dashboard-container">
-            {/* Sidebar */}
-            <aside className="sidebar">
-                <div style={{ paddingBottom: '2rem', borderBottom: '1px solid var(--border)', marginBottom: '2rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', borderRadius: '8px' }}></div>
-                        Tracker<span style={{ fontWeight: 400, opacity: 0.5 }}>Pro</span>
-                    </div>
+        <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+            {/* Top Navigation Bar */}
+            <header className="dashboard-header">
+                <div>
+                    <h1 className="text-h1">Daily Business Tracker</h1>
+                    <p className="text-muted">Zone-wise New Business Management System</p>
                 </div>
 
-                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '1rem' }}>
-                    <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Your Role</h4>
-                    <div style={{ fontWeight: 600 }}>Zonal Manager</div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{locations.length} Branches Assigned</div>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="main-content">
-                <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Branch Entry</h1>
-                        <p style={{ color: 'var(--text-muted)' }}>Enter daily performance for your zones</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eef2ff', padding: '0.5rem 1rem', borderRadius: '20px', color: '#4f46e5' }}>
+                        <Shield size={16} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Zonal Manager Access</span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Calendar size={16} color="var(--primary)" />
-                            <input
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                                style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontFamily: 'inherit' }}
-                            />
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{locations.length} Branches</div>
+                    </div>
+
+                    <button
+                        onClick={onLogout}
+                        className="btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
+                    >
+                        <LogOut size={16} /> Logout
+                    </button>
+                </div>
+            </header>
+
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+
+                {/* Tabs */}
+                <div className="nav-tabs">
+                    <button
+                        className={`nav-tab ${activeTab === 'plan' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('plan')}
+                    >
+                        <Sun size={18} /> Morning - Plan Entry
+                    </button>
+                    <button
+                        className={`nav-tab ${activeTab === 'achievement' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('achievement')}
+                    >
+                        <Moon size={18} /> Evening - Achievement Entry
+                    </button>
+                    <button
+                        className={`nav-tab ${activeTab === 'summary' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('summary')}
+                    >
+                        <BarChart2 size={18} /> Summary & Analytics
+                    </button>
+                </div>
+
+                {/* Content Card */}
+                <div className="clean-card animate-fade-in">
+                    <div className="card-header-accent">
+                        <h2 className="text-h2" style={{ marginBottom: '0.25rem' }}>
+                            {activeTab === 'plan' && 'Morning Session - Daily Plan Entry'}
+                            {activeTab === 'achievement' && 'Evening Session - Business Achievement'}
+                            {activeTab === 'summary' && 'Daily Summary Overview'}
+                        </h2>
+                        <p className="text-muted">
+                            {activeTab === 'plan' && 'Enter your daily new business plan for today'}
+                            {activeTab === 'achievement' && 'Update the actual new business figures achieved'}
+                            {activeTab === 'summary' && 'Review performance across all allocated branches'}
+                        </p>
+                    </div>
+
+                    <div style={{ marginBottom: '2rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>Select Date</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                <Calendar size={18} color="#6b7280" />
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '0.9rem', color: '#111827' }}
+                                />
+                            </div>
                         </div>
-                        <button className="btn-ghost" onClick={onLogout}>Logout</button>
-                    </div>
-                </header>
-
-                <div className="glass-card animate-fade-in" style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Assigned Branches</h3>
-                        <button onClick={handleSave} disabled={saving} className="btn-gradient" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Save size={18} /> {saving ? 'Saving...' : 'Save All Changes'}
-                        </button>
                     </div>
 
                     {locations.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                        <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px' }}>
                             No branches assigned. Please contact Administrator.
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {/* Header Row */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '1rem', padding: '0.5rem 1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                                <div>Zone / Branch</div>
-                                <div>Morning Plan</div>
-                                <div>Actual Business (LKR)</div>
+                        <div>
+                            {/* Table Header */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '0.75rem 1rem', borderBottom: '2px solid #f3f4f6', background: '#f9fafb', fontWeight: 600, fontSize: '0.85rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                                <div>Zone / Branch Details</div>
+                                <div>{activeTab === 'plan' ? 'New Business Plan' : 'Morning Plan'}</div>
+                                <div>{activeTab === 'achievement' ? 'Actual Achievement (LKR)' : (activeTab === 'summary' ? 'Achievement' : 'Status')}</div>
                             </div>
 
                             {locations.map((loc, idx) => {
@@ -167,34 +195,90 @@ export default function ZonalManagerDashboard({ user, onLogout }) {
                                 const rec = records[key] || {};
 
                                 return (
-                                    <div key={idx} className="glass-card" style={{ padding: '1rem', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '1rem', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                                    <div key={idx} style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '2fr 1fr 1fr',
+                                        padding: '1rem',
+                                        alignItems: 'center',
+                                        borderBottom: '1px solid #f3f4f6',
+                                        background: idx % 2 === 0 ? 'white' : '#fafafa'
+                                    }}>
                                         <div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.2rem' }}>{loc.zone}</div>
-                                            <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{loc.branch}</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 600 }}>{loc.zone}</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: 500 }}>{loc.branch} Branch</div>
                                         </div>
 
-                                        <div>
-                                            <input
-                                                className="glass-input"
-                                                placeholder="Enter plan..."
-                                                value={rec.morning_plan || ''}
-                                                onChange={(e) => handleInputChange(loc.zone, loc.branch, 'morning_plan', e.target.value)}
-                                            />
+                                        {/* Morning Plan Column */}
+                                        <div style={{ paddingRight: '1rem' }}>
+                                            {activeTab === 'plan' ? (
+                                                <input
+                                                    className="clean-input"
+                                                    placeholder="Enter plan description..."
+                                                    value={rec.morning_plan || ''}
+                                                    onChange={(e) => handleInputChange(loc.zone, loc.branch, 'morning_plan', e.target.value)}
+                                                />
+                                            ) : (
+                                                <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                                    {rec.morning_plan || '-'}
+                                                </span>
+                                            )}
                                         </div>
 
+                                        {/* Actual Achievement Column */}
                                         <div>
-                                            <input
-                                                type="number"
-                                                className="glass-input"
-                                                placeholder="0.00"
-                                                style={{ fontWeight: 600, color: '#10b981' }}
-                                                value={rec.actual_business || ''}
-                                                onChange={(e) => handleInputChange(loc.zone, loc.branch, 'actual_business', e.target.value)}
-                                            />
+                                            {activeTab === 'achievement' ? (
+                                                <input
+                                                    type="number"
+                                                    className="clean-input"
+                                                    placeholder="0.00"
+                                                    style={{ fontWeight: 600, color: '#059669' }}
+                                                    value={rec.actual_business || ''}
+                                                    onChange={(e) => handleInputChange(loc.zone, loc.branch, 'actual_business', e.target.value)}
+                                                />
+                                            ) : (
+                                                activeTab === 'summary' ? (
+                                                    <span style={{ fontWeight: 600, color: (rec.actual_business > 0) ? '#059669' : '#6b7280' }}>
+                                                        {formatCurrency(rec.actual_business || 0)}
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px', color: '#6b7280' }}>Pending Evening Entry</span>
+                                                )
+                                            )}
                                         </div>
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {activeTab !== 'summary' && locations.length > 0 && (
+                        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="btn-primary"
+                                style={{ width: 'auto', paddingLeft: '2rem', paddingRight: '2rem' }}
+                            >
+                                {saving ? (
+                                    'Saving...'
+                                ) : (
+                                    <>
+                                        <Save size={18} style={{ marginRight: '0.5rem' }} />
+                                        Save {activeTab === 'plan' ? 'Plans' : 'Achievements'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
+
+                    {activeTab === 'summary' && locations.length > 0 && (
+                        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: '#0369a1', fontWeight: 600 }}>Total Zone Achievement Today</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0284c7' }}>
+                                    {formatCurrency(Object.values(records).reduce((acc, r) => acc + (parseFloat(r.actual_business) || 0), 0))}
+                                </span>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -32,52 +32,71 @@ export default function LoginForm({ onLogin, onSwitch }) {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-            <div className="glass-card animate-fade-in" style={{ padding: '3rem', width: '100%', maxWidth: '400px' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center', fontWeight: 'bold' }} className="text-gradient">
-                    Welcome Back
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f3f4f6' }}>
+            <div className="clean-card animate-fade-in" style={{ padding: '3rem', width: '100%', maxWidth: '440px', background: 'white' }}>
+                <h2 className="text-h1" style={{ marginBottom: '1rem', textAlign: 'left' }}>
+                    Business Tracker Login
                 </h2>
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Login to your dashboard</p>
+                <p className="text-muted" style={{ marginBottom: '2.5rem', textAlign: 'left' }}>
+                    Sign in to access your daily business tracker
+                </p>
 
-                {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>{error}</div>}
+                {error && (
+                    <div style={{
+                        background: '#fef2f2',
+                        border: '1px solid #fee2e2',
+                        color: '#b91c1c',
+                        padding: '0.75rem',
+                        borderRadius: '6px',
+                        marginBottom: '1.5rem',
+                        fontSize: '0.9rem'
+                    }}>
+                        {error}
+                    </div>
+                )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Username</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+                            Username or Company Email
+                        </label>
                         <input
                             type="text"
-                            className="glass-input"
+                            className="clean-input"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
-                            placeholder="e.g. john_doe"
+                            placeholder="your.email@company.com"
                         />
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Password</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+                            Password
+                        </label>
                         <input
                             type="password"
-                            className="glass-input"
+                            className="clean-input"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            placeholder="••••••••"
+                            placeholder="Enter your password"
                         />
                     </div>
 
-                    <button type="submit" className="btn-gradient" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
+                    <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem', height: '48px', fontSize: '1rem' }} disabled={loading}>
+                        {loading ? 'Verifying...' : 'Sign In'}
                     </button>
                 </form>
 
-                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#6b7280' }}>
                     Don't have an account?{' '}
                     <button
                         onClick={onSwitch}
-                        style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                        className="text-link"
+                        style={{ background: 'none', border: 'none', padding: 0, font: 'inherit' }}
                     >
-                        Create one
+                        Create Account
                     </button>
                 </div>
             </div>

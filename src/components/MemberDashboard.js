@@ -1,216 +1,250 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, LogOut, TrendingUp, History, User } from 'lucide-react';
+import { Sun, Moon, BarChart2, Save, LogOut, Calendar, User } from 'lucide-react';
 
 export default function MemberDashboard({ user, onLogout }) {
+    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
-    const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [msg, setMsg] = useState('');
-
-    const date = new Date().toISOString().split('T')[0];
+    const [saving, setSaving] = useState(false);
+    const [history, setHistory] = useState([]);
 
     useEffect(() => {
-        fetchData();
-    }, [user.id]);
+        fetchRecord();
+        if (activeTab === 'history') fetchHistory();
+    }, [date, activeTab]);
 
-    const fetchData = async () => {
+    const fetchRecord = async () => {
+        setLoading(true);
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
             if (data.id) {
-                setRecord({
-                    morning_plan: data.morning_plan || '',
-                    actual_business: data.actual_business || ''
-                });
-            }
-
-            const hRes = await fetch(`/api/records?userId=${user.id}`);
-            const hData = await hRes.json();
-            if (Array.isArray(hData)) {
-                setHistory(hData);
+                setRecord(data);
+            } else {
+                setRecord({ morning_plan: '', actual_business: '' });
             }
         } catch (e) {
             console.error(e);
-        }
-    };
-
-    const handleSave = async (field) => {
-        setLoading(true);
-        try {
-            const payload = {
-                user_id: user.id,
-                date,
-                morning_plan: record.morning_plan,
-                actual_business: parseFloat(record.actual_business) || 0
-            };
-
-            await fetch('/api/records', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            setMsg('Saved successfully!');
-            setTimeout(() => setMsg(''), 3000);
-            fetchData();
-        } catch (e) {
-            console.error(e);
-            setMsg('Error saving');
         } finally {
             setLoading(false);
         }
     };
 
+    const fetchHistory = async () => {
+        try {
+            const res = await fetch(`/api/records?userId=${user.id}`);
+            const data = await res.json();
+            setHistory(Array.isArray(data) ? data : []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch('/api/records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    date,
+                    morning_plan: record.morning_plan,
+                    actual_business: parseFloat(record.actual_business) || 0
+                })
+            });
+            if (res.ok) {
+                alert('Saved successfully!');
+                fetchRecord(); // Refresh to ensure sync
+            } else {
+                alert('Failed to save.');
+            }
+        } catch (e) {
+            alert('Error saving.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const formatCurrency = (val) => {
-        return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(val);
+        return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(val);
     };
 
     return (
-        <div className="dashboard-container">
-            {/* Sidebar */}
-            <aside className="sidebar">
-                <div style={{ paddingBottom: '2rem', borderBottom: '1px solid var(--border)', marginBottom: '2rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px' }}></div>
-                        Tracker
-                    </div>
+        <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+            {/* Header */}
+            <header className="dashboard-header">
+                <div>
+                    <h1 className="text-h1">Daily Business Tracker</h1>
+                    <p className="text-muted">Member Performance Portal</p>
                 </div>
 
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <button className="btn-ghost" style={{ justifyContent: 'flex-start', background: 'rgba(255,255,255,0.05)', color: 'white' }}>
-                        <LayoutDashboard size={18} style={{ marginRight: '0.75rem' }} /> Dashboard
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eef2ff', padding: '0.5rem 1rem', borderRadius: '20px', color: '#4f46e5' }}>
+                        <User size={16} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Team Member</span>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                            {user.branch ? user.branch : 'No Branch'} • {user.zone ? user.zone : 'No Zone'}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onLogout}
+                        className="btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
+                    >
+                        <LogOut size={16} /> Logout
                     </button>
-                </nav>
+                </div>
+            </header>
 
-                <div style={{ marginTop: 'auto' }}>
-                    <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>{user.username}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.role}</div>
-                    </div>
-                    <button onClick={onLogout} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: '#fca5a5' }}>
-                        <LogOut size={18} style={{ marginRight: '0.75rem' }} /> Logout
+            <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
+
+                {/* Tabs */}
+                <div className="nav-tabs">
+                    <button
+                        className={`nav-tab ${activeTab === 'plan' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('plan')}
+                    >
+                        <Sun size={18} /> Morning - Plan
+                    </button>
+                    <button
+                        className={`nav-tab ${activeTab === 'achievement' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('achievement')}
+                    >
+                        <Moon size={18} /> Evening - Achievement
+                    </button>
+                    <button
+                        className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('history')}
+                    >
+                        <BarChart2 size={18} /> History
                     </button>
                 </div>
-            </aside>
 
-            {/* Main Content */}
-            <main className="main-content">
-                <header style={{ marginBottom: '3rem' }}>
-                    <h1 className="animate-fade-in" style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                        Good Morning, <span className="text-gradient">{user.username}</span>
-                    </h1>
-                    <p style={{ color: 'var(--text-muted)' }}>Here's your daily business tracker for {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                </header>
-
-                <div className="stats-grid">
-                    {/* Morning Plan Card */}
-                    <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.1s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                            <div style={{ padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
-                                <TrendingUp size={24} />
-                            </div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Morning Plan</h2>
-                        </div>
-
-                        <textarea
-                            className="glass-input"
-                            rows="4"
-                            value={record.morning_plan}
-                            onChange={(e) => setRecord({ ...record, morning_plan: e.target.value })}
-                            placeholder="What are your targets for today?"
-                            style={{ resize: 'none', marginBottom: '1.5rem', background: 'rgba(15, 23, 42, 0.3)' }}
-                        ></textarea>
-
-                        <button
-                            className="btn-gradient"
-                            style={{ width: '100%' }}
-                            onClick={() => handleSave('morning_plan')}
-                            disabled={loading}
-                        >
-                            Save Plan
-                        </button>
+                {/* Content */}
+                <div className="clean-card animate-fade-in">
+                    <div className="card-header-accent">
+                        <h2 className="text-h2">
+                            {activeTab === 'plan' && 'Morning Session - Plan Entry'}
+                            {activeTab === 'achievement' && 'Evening Session - Achievement'}
+                            {activeTab === 'history' && 'Performance History'}
+                        </h2>
+                        <p className="text-muted">
+                            {activeTab === 'plan' && 'What is your target for today?'}
+                            {activeTab === 'achievement' && 'Update your actual business figures'}
+                            {activeTab === 'history' && 'Your past performance records'}
+                        </p>
                     </div>
 
-                    {/* End of Day Update */}
-                    <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.2s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                            <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', color: '#10b981' }}>
-                                <History size={24} />
+                    {activeTab !== 'history' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>Date</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f3f4f6', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                        <Calendar size={18} color="#6b7280" />
+                                        <input
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#111827', width: '100%' }}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>Branch Information</label>
+                                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px', border: '1px dashed #d1d5db', color: '#6b7280', fontSize: '0.9rem' }}>
+                                        {user.branch} Branch / {user.zone} Zone
+                                    </div>
+                                </div>
                             </div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>End of Day Result</h2>
-                        </div>
 
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.75rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                                Total New Business Value (LKR)
-                            </label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>Rs.</span>
-                                <input
-                                    type="number"
-                                    className="glass-input"
-                                    style={{ paddingLeft: '3rem', fontSize: '1.5rem', fontWeight: 'bold' }}
-                                    value={record.actual_business}
-                                    onChange={(e) => setRecord({ ...record, actual_business: e.target.value })}
-                                    placeholder="0.00"
-                                />
+                            {activeTab === 'plan' && (
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>Daily New Business Plan</label>
+                                    <textarea
+                                        className="clean-input"
+                                        rows={4}
+                                        placeholder="Describe your plan for today (e.g., maintain relationships, visit client X...)"
+                                        value={record.morning_plan || ''}
+                                        onChange={(e) => setRecord({ ...record, morning_plan: e.target.value })}
+                                    />
+                                </div>
+                            )}
+
+                            {activeTab === 'achievement' && (
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>Actual Business Achieved (LKR)</label>
+                                    <input
+                                        type="number"
+                                        className="clean-input"
+                                        style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}
+                                        placeholder="0.00"
+                                        value={record.actual_business || ''}
+                                        onChange={(e) => setRecord({ ...record, actual_business: e.target.value })}
+                                    />
+                                    <p className="text-muted" style={{ marginTop: '0.5rem' }}>
+                                        Enter the total value of new business generated today.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                <button onClick={handleSave} className="btn-primary" style={{ width: 'auto', paddingLeft: '2rem', paddingRight: '2rem' }} disabled={saving}>
+                                    {saving ? 'Saving...' : 'Save Record'}
+                                </button>
                             </div>
-                            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                                Current: {formatCurrency(record.actual_business || 0)}
-                            </p>
                         </div>
-
-                        <button
-                            className="btn-gradient"
-                            style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)' }}
-                            onClick={() => handleSave('actual_business')}
-                            disabled={loading}
-                        >
-                            Update Business
-                        </button>
-
-                        {msg && <div style={{ marginTop: '1rem', color: '#10b981', textAlign: 'center', fontSize: '0.875rem' }}>{msg}</div>}
-                    </div>
-                </div>
-
-                {/* History Section */}
-                <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.3s' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Recent Activity</h3>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="premium-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Plan</th>
-                                    <th>Business Value</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map((r, i) => (
-                                    <tr key={i}>
-                                        <td>{new Date(r.date).toLocaleDateString()}</td>
-                                        <td style={{ maxWidth: '300px', color: 'var(--text-muted)' }}>{r.morning_plan || '-'}</td>
-                                        <td style={{ fontWeight: 600, color: r.actual_business > 0 ? '#10b981' : 'inherit' }}>
-                                            {formatCurrency(r.actual_business)}
-                                        </td>
-                                        <td>
-                                            {r.actual_business > 0 ? (
-                                                <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', fontSize: '0.75rem', fontWeight: 600 }}>Completed</span>
-                                            ) : (
-                                                <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Pending</span>
-                                            )}
-                                        </td>
+                    ) : (
+                        <div>
+                            <table className="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Morning Plan</th>
+                                        <th>Achievement</th>
+                                        <th>Status</th>
                                     </tr>
-                                ))}
-                                {history.length === 0 && (
-                                    <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No history available</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {history.map((h, i) => (
+                                        <tr key={i}>
+                                            <td style={{ fontWeight: 500 }}>{h.date}</td>
+                                            <td style={{ color: '#6b7280', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.morning_plan || '-'}</td>
+                                            <td style={{ fontWeight: 600, color: h.actual_business > 0 ? '#059669' : '#374151' }}>
+                                                {formatCurrency(h.actual_business || 0)}
+                                            </td>
+                                            <td>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: '99px',
+                                                    background: h.actual_business ? '#ecfdf5' : '#f3f4f6',
+                                                    color: h.actual_business ? '#047857' : '#6b7280',
+                                                    fontWeight: 600
+                                                }}>
+                                                    {h.actual_business ? 'Completed' : 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {history.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No records found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
