@@ -50,22 +50,28 @@ export async function GET(request) {
             const groups = {};
             filtered.forEach(r => {
                 const z = r.zone;
-                if (!groups[z]) groups[z] = { zone: z, agents: 0, total_business: 0 };
-                groups[z].agents++; // This is actually "records count" now, effectively branches reporting
-                groups[z].total_business += (r.actual_business || 0);
+                if (!groups[z]) groups[z] = { zone: z, branches: 0, aaf_agents: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
+                groups[z].branches++;
+                groups[z].aaf_agents += (r.aaf_agents || 0);
+                groups[z].agent_achievement += (r.agent_achievement || 0);
+                groups[z].bdo_branch_performance += (r.bdo_branch_performance || 0);
+                groups[z].total_business += ((r.agent_achievement || 0) + (r.bdo_branch_performance || 0));
             });
-            return NextResponse.json(Object.values(groups));
+            // Map for Admin dashboard compatibility (it expects "agents" field for some charts)
+            return NextResponse.json(Object.values(groups).map(g => ({ ...g, agents: g.aaf_agents })));
         }
 
         if (type === 'branch') {
             const groups = {};
             filtered.forEach(r => {
                 const b = r.branch;
-                if (!groups[b]) groups[b] = { branch: b, agents: 0, total_business: 0 };
-                groups[b].agents++;
-                groups[b].total_business += (r.actual_business || 0);
+                if (!groups[b]) groups[b] = { branch: b, aaf_agents: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
+                groups[b].aaf_agents += (r.aaf_agents || 0);
+                groups[b].agent_achievement += (r.agent_achievement || 0);
+                groups[b].bdo_branch_performance += (r.bdo_branch_performance || 0);
+                groups[b].total_business += ((r.agent_achievement || 0) + (r.bdo_branch_performance || 0));
             });
-            return NextResponse.json(Object.values(groups));
+            return NextResponse.json(Object.values(groups).map(g => ({ ...g, agents: g.aaf_agents })));
         }
 
         // Overview / List

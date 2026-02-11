@@ -384,8 +384,10 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 <thead>
                                     <tr>
                                         <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                        <th>{tab === 'overview' ? 'Plan' : 'Count'}</th>
-                                        <th>Business (LKR)</th>
+                                        <th>{tab === 'overview' ? 'Plan' : 'AAF Agents'}</th>
+                                        {(tab === 'zone' || tab === 'branch') && <th>Agent Ach.</th>}
+                                        {(tab === 'zone' || tab === 'branch') && <th>BDO Perf.</th>}
+                                        <th>Total Business</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -395,14 +397,24 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
                                             </td>
                                             <td style={{ color: '#6b7280' }}>
-                                                {tab === 'overview' ? (item.morning_plan || '-') : (item.agents + ' active')}
+                                                {tab === 'overview' ? (item.morning_plan || '-') : (item.agents || 0)}
                                             </td>
-                                            <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#059669' : '#374151' }}>
+                                            {(tab === 'zone' || tab === 'branch') && (
+                                                <td style={{ color: '#059669', fontWeight: 500 }}>
+                                                    {formatCurrency(item.agent_achievement || 0)}
+                                                </td>
+                                            )}
+                                            {(tab === 'zone' || tab === 'branch') && (
+                                                <td style={{ color: '#0284c7', fontWeight: 500 }}>
+                                                    {formatCurrency(item.bdo_branch_performance || 0)}
+                                                </td>
+                                            )}
+                                            <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#111827' : '#374151' }}>
                                                 {formatCurrency(item.total_business || item.actual_business || 0)}
                                             </td>
                                         </tr>
                                     ))}
-                                    {data.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>No records</td></tr>}
+                                    {data.length === 0 && <tr><td colSpan={tab === 'overview' ? 3 : 5} style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>No records</td></tr>}
                                 </tbody>
                             </table>
                         </div>
