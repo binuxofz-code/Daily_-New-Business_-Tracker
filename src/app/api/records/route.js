@@ -5,7 +5,7 @@ import supabase from '@/lib/supabase';
 
 export async function POST(request) {
     try {
-        const { user_id, date, zone_plan, branch_plan, aaf_agents, actual_business, zone, branch } = await request.json();
+        const { user_id, date, zone_plan, branch_plan, aaf_agents, agent_achievement, bdo_branch_performance, zone, branch } = await request.json();
 
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
@@ -29,7 +29,8 @@ export async function POST(request) {
             if (zone_plan !== undefined) updates.zone_plan = zone_plan;
             if (branch_plan !== undefined) updates.branch_plan = branch_plan;
             if (aaf_agents !== undefined) updates.aaf_agents = aaf_agents;
-            if (actual_business !== undefined) updates.actual_business = actual_business;
+            if (agent_achievement !== undefined) updates.agent_achievement = agent_achievement;
+            if (bdo_branch_performance !== undefined) updates.bdo_branch_performance = bdo_branch_performance;
             if (zone) updates.zone = zone;
             if (branch) updates.branch = branch;
             updates.updated_at = new Date().toISOString();
@@ -47,7 +48,8 @@ export async function POST(request) {
                 zone_plan: zone_plan || '',
                 branch_plan: branch_plan || '',
                 aaf_agents: aaf_agents || 0,
-                actual_business: actual_business || 0,
+                agent_achievement: agent_achievement || 0,
+                bdo_branch_performance: bdo_branch_performance || 0,
                 zone: zone || '',
                 branch: branch || ''
             });
