@@ -5,7 +5,7 @@ import supabase from '@/lib/supabase';
 
 export async function POST(request) {
     try {
-        const { user_id, date, morning_plan, actual_business, zone, branch } = await request.json();
+        const { user_id, date, zone_plan, branch_plan, aaf_agents, actual_business, zone, branch } = await request.json();
 
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
@@ -20,19 +20,17 @@ export async function POST(request) {
             query = query.eq('branch', branch);
         }
 
-        // If no branch is specified, it might pick up an arbitrary record if multiple exist.
-        // Usually frontend sends branch for Zonal Manager.
-        // For Members, branch comes from their profile or is null/empty in DB.
-
         const { data: checks } = await query;
         const check = checks && checks.length > 0 ? checks[0] : null;
 
         if (check) {
             // Update
             const updates = {};
-            if (morning_plan !== undefined) updates.morning_plan = morning_plan;
+            if (zone_plan !== undefined) updates.zone_plan = zone_plan;
+            if (branch_plan !== undefined) updates.branch_plan = branch_plan;
+            if (aaf_agents !== undefined) updates.aaf_agents = aaf_agents;
             if (actual_business !== undefined) updates.actual_business = actual_business;
-            if (zone) updates.zone = zone; // Update zone just in case
+            if (zone) updates.zone = zone;
             if (branch) updates.branch = branch;
             updates.updated_at = new Date().toISOString();
 
@@ -46,7 +44,9 @@ export async function POST(request) {
             // Insert
             const { error } = await supabase.from('daily_records').insert({
                 user_id, date,
-                morning_plan: morning_plan || '',
+                zone_plan: zone_plan || '',
+                branch_plan: branch_plan || '',
+                aaf_agents: aaf_agents || 0,
                 actual_business: actual_business || 0,
                 zone: zone || '',
                 branch: branch || ''
