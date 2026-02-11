@@ -194,13 +194,12 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                     ) : (
                         <div>
                             {/* Table Header */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr', padding: '0.75rem 1rem', borderBottom: '2px solid #f3f4f6', background: '#f9fafb', fontWeight: 600, fontSize: '0.85rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr', padding: '0.75rem 1rem', borderBottom: '2px solid #f3f4f6', background: '#f9fafb', fontWeight: 600, fontSize: '0.85rem', color: '#6b7280', textTransform: 'uppercase' }}>
                                 <div>Zone / Branch</div>
-                                <div>{activeTab === 'plan' ? 'Zone Plan' : 'Zone Plan'}</div>
-                                <div>{activeTab === 'plan' ? 'Branch Plan' : 'Branch Plan'}</div>
-                                <div>AAF Agents</div>
-                                <div>{activeTab === 'achievement' ? 'Agent Achievement' : 'Agent Achievement'}</div>
-                                <div>{activeTab === 'achievement' ? 'BDO Branch Perf.' : 'BDO Branch Perf.'}</div>
+                                <div>Zone Plan</div>
+                                <div>Branch Plan</div>
+                                <div>Agent Ach.</div>
+                                <div>BDO Perf.</div>
                             </div>
 
                             {(() => {
@@ -235,7 +234,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                             {/* Zone Header Row */}
                                             <div style={{
                                                 display: 'grid',
-                                                gridTemplateColumns: '1.2fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr',
+                                                gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr',
                                                 padding: '0.75rem 1rem',
                                                 background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                                                 color: 'white',
@@ -245,13 +244,6 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                 <div style={{ fontSize: '1rem' }}>📍 {zoneName} Zone</div>
                                                 <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{branches.length} Branches</div>
                                                 <div></div>
-                                                <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
-                                                    {branches.reduce((sum, loc) => {
-                                                        const key = `${loc.zone}-${loc.branch}`;
-                                                        const rec = records[key] || {};
-                                                        return sum + (parseInt(rec.aaf_agents) || 0);
-                                                    }, 0)} Agents
-                                                </div>
                                                 <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>
                                                     {activeTab === 'summary' ? formatCurrency(zoneAgentTotal) : 'Agent Total'}
                                                 </div>
@@ -264,7 +256,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                             {activeTab === 'summary' && (
                                                 <div style={{
                                                     display: 'grid',
-                                                    gridTemplateColumns: '1.2fr 0.8fr 0.8fr 0.6fr 1.8fr',
+                                                    gridTemplateColumns: '1.5fr 1fr 1fr 2fr',
                                                     padding: '0.5rem 1rem',
                                                     background: '#1e40af',
                                                     color: 'white',
@@ -272,7 +264,6 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                     alignItems: 'center',
                                                     fontSize: '1.05rem'
                                                 }}>
-                                                    <div></div>
                                                     <div></div>
                                                     <div></div>
                                                     <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Zone Total:</div>
@@ -292,7 +283,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                 return (
                                                     <div key={key} style={{
                                                         display: 'grid',
-                                                        gridTemplateColumns: '1.2fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr',
+                                                        gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr',
                                                         padding: '1rem',
                                                         alignItems: 'center',
                                                         borderBottom: '1px solid #f3f4f6',
@@ -344,23 +335,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                             )}
                                                         </div>
 
-                                                        {/* AAF Agents */}
-                                                        <div>
-                                                            {activeTab === 'plan' ? (
-                                                                <input
-                                                                    type="number"
-                                                                    className="clean-input"
-                                                                    placeholder="0"
-                                                                    value={rec.aaf_agents || ''}
-                                                                    onChange={(e) => handleInputChange(loc.zone, loc.branch, 'aaf_agents', e.target.value)}
-                                                                    style={{ fontSize: '0.85rem', padding: '0.5rem', textAlign: 'center', fontWeight: 600 }}
-                                                                />
-                                                            ) : (
-                                                                <span style={{ color: '#374151', fontSize: '0.9rem', fontWeight: 600 }}>
-                                                                    {rec.aaf_agents || '0'}
-                                                                </span>
-                                                            )}
-                                                        </div>
+
 
                                                         {/* Agent Achievement */}
                                                         <div>

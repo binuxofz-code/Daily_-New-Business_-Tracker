@@ -360,9 +360,9 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 </div>
                             </div>
                             <div className="clean-card" style={{ padding: '1.5rem' }}>
-                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Active Units/Agents</div>
+                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Total Reported Branches/Units</div>
                                 <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem' }}>
-                                    {activeAgents}
+                                    {data.length}
                                 </div>
                             </div>
                         </div>
@@ -384,7 +384,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 <thead>
                                     <tr>
                                         <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                        <th>{tab === 'overview' ? 'Plan' : 'AAF Agents'}</th>
+                                        {tab === 'overview' && <th>Plan</th>}
                                         {(tab === 'zone' || tab === 'branch') && <th>Agent Ach.</th>}
                                         {(tab === 'zone' || tab === 'branch') && <th>BDO Perf.</th>}
                                         <th>Total Business</th>
@@ -396,9 +396,11 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                             <td style={{ fontWeight: 500 }}>
                                                 {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
                                             </td>
-                                            <td style={{ color: '#6b7280' }}>
-                                                {tab === 'overview' ? (item.morning_plan || '-') : (item.agents || 0)}
-                                            </td>
+                                            {tab === 'overview' && (
+                                                <td style={{ color: '#6b7280' }}>
+                                                    {item.morning_plan || '-'}
+                                                </td>
+                                            )}
                                             {(tab === 'zone' || tab === 'branch') && (
                                                 <td style={{ color: '#059669', fontWeight: 500 }}>
                                                     {formatCurrency(item.agent_achievement || 0)}
