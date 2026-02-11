@@ -30,7 +30,10 @@ export async function POST(request) {
         // If it's a member, we just want the ONE record for that day
         const check = checks && checks.length > 0 ? checks[0] : null;
 
-        const finalAgentAch = agent_achievement !== undefined ? agent_achievement : actual_business;
+        const finalAgentAch = agent_achievement !== undefined ? parseFloat(agent_achievement) : (actual_business !== undefined ? parseFloat(actual_business) : 0);
+        const finalBranchPerf = bdo_branch_performance !== undefined ? parseFloat(bdo_branch_performance) : 0;
+        const total_business_val = finalAgentAch + finalBranchPerf;
+
         const finalMorningPlan = morning_plan !== undefined ? morning_plan : (zone_plan || branch_plan || '');
 
         if (check) {
@@ -40,9 +43,10 @@ export async function POST(request) {
             if (branch_plan !== undefined) updates.branch_plan = branch_plan;
             if (morning_plan !== undefined) updates.morning_plan = morning_plan;
             if (aaf_agents !== undefined) updates.aaf_agents = aaf_agents;
-            if (finalAgentAch !== undefined) updates.agent_achievement = finalAgentAch;
-            if (bdo_branch_performance !== undefined) updates.bdo_branch_performance = bdo_branch_performance;
+            if (agent_achievement !== undefined || actual_business !== undefined) updates.agent_achievement = finalAgentAch;
+            if (bdo_branch_performance !== undefined) updates.bdo_branch_performance = finalBranchPerf;
             if (actual_business !== undefined) updates.actual_business = actual_business;
+            updates.total_business = total_business_val;
             if (zone) updates.zone = zone;
             if (branch) updates.branch = branch;
             updates.updated_at = new Date().toISOString();
@@ -61,8 +65,9 @@ export async function POST(request) {
                 branch_plan: branch_plan || '',
                 morning_plan: finalMorningPlan,
                 aaf_agents: aaf_agents || 0,
-                agent_achievement: finalAgentAch || 0,
-                bdo_branch_performance: bdo_branch_performance || 0,
+                agent_achievement: finalAgentAch,
+                bdo_branch_performance: finalBranchPerf,
+                total_business: total_business_val,
                 actual_business: actual_business || 0,
                 zone: zone || '',
                 branch: branch || ''
