@@ -79,31 +79,43 @@ export default function SignupForm({ onSignup, onSwitch }) {
                             <option value="head">Department Head</option>
                             <option value="admin">Admin</option>
                         </select>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                            Select "Zonal Manager" to manage a specific zone.
-                        </p>
+                        {formData.role === 'zonal_manager' &&
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                Select "Zonal Manager" to manage a specific zone.
+                            </p>
+                        }
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Zone</label>
-                            <input
-                                className="glass-input"
-                                placeholder="e.g. West"
-                                value={formData.zone}
-                                onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                            />
+                    {/* Only show Zone/Branch input for Zonal Manager or Admin/Heads if needed. 
+                        Members do NOT set this - Admin sets it for them. */}
+                    {formData.role !== 'member' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Zone</label>
+                                <input
+                                    className="glass-input"
+                                    placeholder="e.g. West"
+                                    value={formData.zone}
+                                    onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Branch</label>
+                                <input
+                                    className="glass-input"
+                                    placeholder="e.g. NYC"
+                                    value={formData.branch}
+                                    onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Branch</label>
-                            <input
-                                className="glass-input"
-                                placeholder="e.g. NYC"
-                                value={formData.branch}
-                                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                            />
-                        </div>
-                    </div>
+                    )}
+
+                    {formData.role === 'member' && (
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '8px' }}>
+                            Your Zone and Branch will be assigned by the Admin after registration.
+                        </p>
+                    )}
 
                     <button type="submit" className="btn-gradient" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
                         {loading ? 'Creating...' : 'Sign Up'}

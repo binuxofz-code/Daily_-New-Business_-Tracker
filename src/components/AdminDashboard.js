@@ -1,20 +1,29 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { LayoutDashboard, Users, MapPin, Briefcase, Filter, Calendar, TrendingUp } from 'lucide-react';
+import { Users, MapPin, Briefcase, Calendar, TrendingUp, Settings } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export default function AdminDashboard({ user, onLogout }) {
-    const [tab, setTab] = useState('overview'); // overview, zone, branch
+    const [tab, setTab] = useState('overview'); // overview, zone, branch, users
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
 
+    // User Management State
+    const [allUsers, setAllUsers] = useState([]);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editForm, setEditForm] = useState({ zone: '', branch: '' });
+
     useEffect(() => {
-        fetchStats();
+        if (tab === 'users') {
+            fetchUsers();
+        } else {
+            fetchStats();
+        }
     }, [tab, filterDate]);
 
     const fetchStats = async () => {
@@ -36,6 +45,38 @@ export default function AdminDashboard({ user, onLogout }) {
             setData([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/users');
+            const d = await res.json();
+            setAllUsers(Array.isArray(d) ? d : []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditUser = (u) => {
+        setEditingUser(u.id);
+        setEditForm({ zone: u.zone || '', branch: u.branch || '' });
+    };
+
+    const saveUser = async (id) => {
+        try {
+            await fetch('/api/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, ...editForm })
+            });
+            setEditingUser(null);
+            fetchUsers();
+        } catch (e) {
+            alert('Failed to save');
         }
     };
 
@@ -98,31 +139,26 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <button
-                        onClick={() => setTab('overview')}
-                        className={tab === 'overview' ? 'btn-gradient' : 'btn-ghost'}
-                        style={{ justifyContent: 'flex-start', width: '100%' }}
-                    >
+                    <button onClick={() => setTab('overview')} className={tab === 'overview' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
                         <Users size={18} style={{ marginRight: '0.75rem' }} /> Overview
                     </button>
 
                     {user.role !== 'zonal_manager' && (
-                        <button
-                            onClick={() => setTab('zone')}
-                            className={tab === 'zone' ? 'btn-gradient' : 'btn-ghost'}
-                            style={{ justifyContent: 'flex-start', width: '100%' }}
-                        >
+                        <button onClick={() => setTab('zone')} className={tab === 'zone' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
                             <MapPin size={18} style={{ marginRight: '0.75rem' }} /> Zone Performance
                         </button>
                     )}
 
-                    <button
-                        onClick={() => setTab('branch')}
-                        className={tab === 'branch' ? 'btn-gradient' : 'btn-ghost'}
-                        style={{ justifyContent: 'flex-start', width: '100%' }}
-                    >
+                    <button onClick={() => setTab('branch')} className={tab === 'branch' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%' }}>
                         <Briefcase size={18} style={{ marginRight: '0.75rem' }} /> Branch Performance
                     </button>
+
+                    {/* New Manage Users Tab */}
+                    {(user.role === 'admin' || user.role === 'head') && (
+                        <button onClick={() => setTab('users')} className={tab === 'users' ? 'btn-gradient' : 'btn-ghost'} style={{ justifyContent: 'flex-start', width: '100%', marginTop: 'auto' }}>
+                            <Settings size={18} style={{ marginRight: '0.75rem' }} /> Manage Users
+                        </button>
+                    )}
                 </nav>
             </aside>
 
@@ -130,101 +166,164 @@ export default function AdminDashboard({ user, onLogout }) {
             <main className="main-content">
                 <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Dashboard</h1>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {tab === 'users' ? 'Manage Users' : 'Dashboard'}
+                        </h1>
                         <p style={{ color: 'var(--text-muted)' }}>Welcome back, {user.username}</p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Calendar size={16} color="var(--primary)" />
-                            <input
-                                type="date"
-                                value={filterDate}
-                                onChange={(e) => setFilterDate(e.target.value)}
-                                style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontFamily: 'inherit' }}
-                            />
-                        </div>
+                        {tab !== 'users' && (
+                            <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Calendar size={16} color="var(--primary)" />
+                                <input
+                                    type="date"
+                                    value={filterDate}
+                                    onChange={(e) => setFilterDate(e.target.value)}
+                                    style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontFamily: 'inherit' }}
+                                />
+                            </div>
+                        )}
                         <button className="btn-ghost" onClick={onLogout}>Logout</button>
                     </div>
                 </header>
 
-                {/* Global Stats */}
-                <div className="stats-grid">
-                    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '16px', color: 'var(--primary)' }}>
-                            <TrendingUp size={32} />
-                        </div>
-                        <div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Business</div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatCurrency(totalBusiness)}</div>
-                        </div>
-                    </div>
-
-                    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ padding: '1rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '16px', color: 'var(--secondary)' }}>
-                            <Users size={32} />
-                        </div>
-                        <div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Active Agents</div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{activeAgents}</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Chart Section */}
-                <div className="glass-card animate-fade-in" style={{ padding: '2rem', marginBottom: '2rem', height: '400px' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Performance Trends</h3>
-                    {data.length > 0 ? (
-                        <Bar data={barData} options={chartOptions} />
-                    ) : (
-                        <div className="flex-center" style={{ height: '100%', color: 'var(--text-muted)' }}>No data to display</div>
-                    )}
-                </div>
-
-                {/* Detailed Table */}
-                <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.2s' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Detailed Breakdown</h3>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="premium-table">
-                            <thead>
-                                <tr>
-                                    <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                    {tab === 'overview' && <th>Location</th>}
-                                    <th>{tab === 'overview' ? 'Status/Plan' : 'Agents Count'}</th>
-                                    <th>Total Business (LKR)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td style={{ fontWeight: 500 }}>
-                                            {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
-                                        </td>
-
-                                        {tab === 'overview' && (
-                                            <td style={{ color: 'var(--text-muted)' }}>
-                                                {item.zone} / {item.branch}
-                                            </td>
-                                        )}
-
-                                        <td style={{ color: 'var(--text-muted)' }}>
-                                            {tab === 'overview' ? (
-                                                item.morning_plan || <span style={{ opacity: 0.5 }}>No Plan Set</span>
-                                            ) : (
-                                                item.agents + ' Active'
-                                            )}
-                                        </td>
-
-                                        <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#10b981' : 'inherit' }}>
-                                            {formatCurrency(item.total_business || item.actual_business || 0)}
-                                        </td>
+                {tab === 'users' ? (
+                    <div className="glass-card animate-fade-in" style={{ padding: '2rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>All Users</h3>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="premium-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Zone</th>
+                                        <th>Branch</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ))}
-                                {data.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>No records found</td></tr>}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {allUsers.map(u => (
+                                        <tr key={u.id}>
+                                            <td style={{ fontWeight: 500 }}>{u.username}</td>
+                                            <td style={{ opacity: 0.7 }}>{u.role}</td>
+                                            <td>
+                                                {editingUser === u.id ? (
+                                                    <input
+                                                        className="glass-input"
+                                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
+                                                        value={editForm.zone}
+                                                        onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                                                    />
+                                                ) : u.zone || '-'}
+                                            </td>
+                                            <td>
+                                                {editingUser === u.id ? (
+                                                    <input
+                                                        className="glass-input"
+                                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
+                                                        value={editForm.branch}
+                                                        onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                                    />
+                                                ) : u.branch || '-'}
+                                            </td>
+                                            <td>
+                                                {editingUser === u.id ? (
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        <button onClick={() => saveUser(u.id)} style={{ color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                                                        <button onClick={() => setEditingUser(null)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => handleEditUser(u)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <>
+                        {/* Global Stats */}
+                        <div className="stats-grid">
+                            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                <div style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '16px', color: 'var(--primary)' }}>
+                                    <TrendingUp size={32} />
+                                </div>
+                                <div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Business</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatCurrency(totalBusiness)}</div>
+                                </div>
+                            </div>
+
+                            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                <div style={{ padding: '1rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '16px', color: 'var(--secondary)' }}>
+                                    <Users size={32} />
+                                </div>
+                                <div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Active Agents</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{activeAgents}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Chart Section */}
+                        <div className="glass-card animate-fade-in" style={{ padding: '2rem', marginBottom: '2rem', height: '400px' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Performance Trends</h3>
+                            {data.length > 0 ? (
+                                <Bar data={barData} options={chartOptions} />
+                            ) : (
+                                <div className="flex-center" style={{ height: '100%', color: 'var(--text-muted)' }}>No data to display</div>
+                            )}
+                        </div>
+
+                        {/* Detailed Table */}
+                        <div className="glass-card animate-fade-in" style={{ padding: '2rem', animationDelay: '0.2s' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Detailed Breakdown</h3>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="premium-table">
+                                    <thead>
+                                        <tr>
+                                            <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
+                                            {tab === 'overview' && <th>Location</th>}
+                                            <th>{tab === 'overview' ? 'Status/Plan' : 'Agents Count'}</th>
+                                            <th>Total Business (LKR)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td style={{ fontWeight: 500 }}>
+                                                    {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
+                                                </td>
+
+                                                {tab === 'overview' && (
+                                                    <td style={{ color: 'var(--text-muted)' }}>
+                                                        {item.zone} / {item.branch}
+                                                    </td>
+                                                )}
+
+                                                <td style={{ color: 'var(--text-muted)' }}>
+                                                    {tab === 'overview' ? (
+                                                        item.morning_plan || <span style={{ opacity: 0.5 }}>No Plan Set</span>
+                                                    ) : (
+                                                        item.agents + ' Active'
+                                                    )}
+                                                </td>
+
+                                                <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#10b981' : 'inherit' }}>
+                                                    {formatCurrency(item.total_business || item.actual_business || 0)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {data.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>No records found</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )}
             </main>
         </div>
     );
