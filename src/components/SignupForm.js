@@ -34,7 +34,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-body)', position: 'relative' }}>
+        <div className="auth-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-body)', position: 'relative' }}>
             {/* Theme Toggle */}
             <button
                 onClick={toggleTheme}
@@ -44,7 +44,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
 
-            <div className="clean-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '480px', background: 'var(--bg-card)' }}>
+            <div className="clean-card auth-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '480px', background: 'var(--bg-card)' }}>
                 <h2 className="text-h1" style={{ marginBottom: '0.5rem', textAlign: 'left', color: 'var(--text-main)' }}>
                     Create Account
                 </h2>

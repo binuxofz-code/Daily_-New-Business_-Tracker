@@ -259,7 +259,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                             </div>
                         </div>
                     ) : (
-                        <div>
+                        <div className="table-container">
                             <table className="clean-table">
                                 <thead>
                                     <tr>

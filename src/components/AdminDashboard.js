@@ -239,7 +239,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                             <p className="text-muted">Manage system access, roles, and branch allocations</p>
                         </div>
 
-                        <div style={{ overflowX: 'auto' }}>
+                        <div className="table-container">
                             <table className="clean-table">
                                 <thead>
                                     <tr>
@@ -446,7 +446,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                     Showing {data.length} records for {filterDate}
                                 </div>
                             </div>
-                            <div style={{ overflowX: 'auto' }}>
+                            <div className="table-container">
                                 <table className="clean-table">
                                     <thead>
                                         <tr>

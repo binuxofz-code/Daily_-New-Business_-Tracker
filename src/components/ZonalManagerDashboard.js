@@ -294,7 +294,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                     return (
                                         <div key={zoneName} style={{ marginBottom: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-md)' }}>
                                             {/* Zone Header Row */}
-                                            <div style={{
+                                            <div className="zone-header-grid" style={{
                                                 display: 'grid',
                                                 gridTemplateColumns: '1.5fr 1fr 2fr',
                                                 padding: '1.25rem 1.5rem',
@@ -327,7 +327,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                         opacity: 0.95
                                                     }}>
                                                         {/* Single Branch Layout */}
-                                                        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', alignItems: 'center', gap: '1rem' }}>
+                                                        <div className="branch-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', alignItems: 'center', gap: '1rem' }}>
                                                             <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                                 <span style={{ fontSize: '1.2rem' }}>🏢</span> {loc.branch}
                                                             </div>
