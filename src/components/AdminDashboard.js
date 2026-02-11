@@ -8,10 +8,18 @@ import { MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
+    // Get current date in SL timezone (YYYY-MM-DD)
+    const getSLDate = () => {
+        const d = new Date();
+        const offset = 5.5 * 60 * 60 * 1000; // SL is UTC+5:30
+        const localTime = new Date(d.getTime() + offset);
+        return localTime.toISOString().split('T')[0];
+    };
+
     const [tab, setTab] = useState('overview'); // overview, zone, branch, users
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+    const [filterDate, setFilterDate] = useState(getSLDate());
 
     // User Management State
     const [allUsers, setAllUsers] = useState([]);
@@ -454,7 +462,12 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                         {data.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                                                    {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : `👤 ${item.username}`)}
+                                                    {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : (
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <span>👤 {item.username}</span>
+                                                            {item.role === 'zonal_manager' && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>🏢 {item.branch} (ZM)</span>}
+                                                        </div>
+                                                    ))}
                                                 </td>
                                                 <td style={{ color: 'var(--text-muted)' }}>
                                                     {formatCurrency(item.plan || item.morning_plan || 0)}

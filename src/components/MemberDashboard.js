@@ -29,8 +29,12 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
-            if (data && data.id) {
-                setRecord(data);
+
+            // API now returns an array for flexibility
+            const activeRecord = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+            if (activeRecord) {
+                setRecord(activeRecord);
             } else {
                 setRecord({ morning_plan: '', actual_business: '' });
             }
@@ -144,10 +148,10 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                     <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Achievement Today (LKR)</div>
                         <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>
-                            {formatCurrency(record.actual_business || 0)}
+                            {formatCurrency(parseFloat(record.actual_business) || 0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                            Status: <span style={{ color: record.actual_business > 0 ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{record.actual_business > 0 ? 'Achievement Recorded' : 'Awaiting Evening Update'}</span>
+                            Status: <span style={{ color: (parseFloat(record.actual_business) > 0) ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{(parseFloat(record.actual_business) > 0) ? 'Achievement Recorded' : 'Awaiting Evening Update'}</span>
                         </div>
                     </div>
                 </div>

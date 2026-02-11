@@ -3,8 +3,16 @@ import { useState, useEffect } from 'react';
 import { Save, Calendar, BarChart2, Shield, LogOut, Sun, Moon } from 'lucide-react';
 
 export default function ZonalManagerDashboard({ user, onLogout, theme, toggleTheme }) {
+    // Get current date in SL timezone (YYYY-MM-DD)
+    const getSLDate = () => {
+        const d = new Date();
+        const offset = 5.5 * 60 * 60 * 1000; // SL is UTC+5:30
+        const localTime = new Date(d.getTime() + offset);
+        return localTime.toISOString().split('T')[0];
+    };
+
     const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, summary
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(getSLDate());
     const [locations, setLocations] = useState([]);
     const [records, setRecords] = useState({});
     const [loading, setLoading] = useState(false);
@@ -60,30 +68,35 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
     const handleSave = async () => {
         setSaving(true);
         try {
-            const promises = locations.map(loc => {
+            const results = await Promise.all(locations.map(async (loc) => {
                 const key = `${loc.zone}-${loc.branch}`;
-                const record = records[key] || {};
+                const recordData = records[key] || {};
 
-                return fetch('/api/records', {
+                const res = await fetch('/api/records', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: user.id,
                         date,
-                        zone_plan: record.zone_plan,
-                        branch_plan: record.branch_plan,
-                        agent_achievement: parseFloat(record.agent_achievement) || 0,
-                        bdo_branch_performance: parseFloat(record.bdo_branch_performance) || 0,
+                        zone_plan: recordData.branch_plan || recordData.zone_plan || '',
+                        branch_plan: recordData.branch_plan || '',
+                        agent_achievement: parseFloat(recordData.agent_achievement) || 0,
+                        bdo_branch_performance: parseFloat(recordData.bdo_branch_performance) || 0,
                         zone: loc.zone,
                         branch: loc.branch
                     })
                 });
-            });
+                return res.ok;
+            }));
 
-            await Promise.all(promises);
-            alert('Records saved successfully!');
+            if (results.every(r => r === true)) {
+                alert('All records saved successfully!');
+            } else {
+                alert('Some records failed to save. Please check your connection.');
+            }
             fetchRecords();
         } catch (e) {
+            console.error(e);
             alert('Error saving records');
         } finally {
             setSaving(false);
@@ -290,7 +303,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                 fontWeight: 700,
                                                 alignItems: 'center'
                                             }}>
-                                                <div style={{ fontSize: '1.1rem' }}>📍 {zoneName} Zone</div>
+                                                <div style={{ fontSize: '1.1rem' }}>📍 {zoneName.toLowerCase().includes('zone') ? zoneName : `${zoneName} Zone`}</div>
                                                 <div style={{ textAlign: 'right', fontSize: '0.9rem', opacity: 0.9 }}>
                                                     Target: {formatCurrency(zonePlanTotal)}
                                                 </div>

@@ -10,18 +10,24 @@ export async function POST(request) {
 
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
-        // Check existing record for this user + date + branch (if branch provided)
+        // Get user role for uniqueness logic
+        const { data: userData } = await supabase.from('users').select('role').eq('id', user_id).single();
+        const role = userData?.role || 'member';
+
+        // Check existing record for this user + date
         let query = supabase
             .from('daily_records')
             .select('*')
             .eq('user_id', user_id)
             .eq('date', date);
 
-        if (branch) {
+        // Zonal managers save one record PER branch
+        if (role === 'zonal_manager' && branch) {
             query = query.eq('branch', branch);
         }
 
         const { data: checks } = await query;
+        // If it's a member, we just want the ONE record for that day
         const check = checks && checks.length > 0 ? checks[0] : null;
 
         const finalAgentAch = agent_achievement !== undefined ? agent_achievement : actual_business;
@@ -82,9 +88,8 @@ export async function GET(request) {
             .from('daily_records')
             .select('*')
             .eq('user_id', userId)
-            .eq('date', date)
-            .single();
-        return NextResponse.json(record || {});
+            .eq('date', date);
+        return NextResponse.json(record || []);
     }
 
     if (userId) {
