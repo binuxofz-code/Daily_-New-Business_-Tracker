@@ -57,7 +57,7 @@ export default function Home() {
 
   // Main Render Logic
   if (user) {
-    if (user.role === 'admin' || user.role === 'head') {
+    if (user.role === 'admin' || user.role === 'head' || user.role === 'viewer_admin') {
       return <AdminDashboard user={user} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />;
     }
     if (user.role === 'zonal_manager') {

@@ -235,12 +235,16 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
                         <Shield size={16} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>System Admin</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                            {user.role === 'viewer_admin' ? 'Viewer Admin' : 'System Admin'}
+                        </span>
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Administrator</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {user.role === 'viewer_admin' ? 'Read-Only Access' : 'Administrator'}
+                        </div>
                     </div>
 
                     <button onClick={onLogout} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -315,6 +319,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                     >
                                                         <option value="member">Member</option>
                                                         <option value="zonal_manager">Zon. Manager</option>
+                                                        <option value="viewer_admin">Viewer Admin</option>
                                                         <option value="head">Head</option>
                                                         <option value="admin">Admin</option>
                                                     </select>
@@ -513,7 +518,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                             <th>Agent Achievement</th>
                                             <th>Branch Achievement</th>
                                             <th style={{ textAlign: 'right' }}>Total Combined</th>
-                                            {tab === 'overview' && <th>Action</th>}
+                                            {tab === 'overview' && user.role !== 'viewer_admin' && <th>Action</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -539,7 +544,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
                                                     {formatCurrency(item.total_business || item.actual_business || 0)}
                                                 </td>
-                                                {tab === 'overview' && (
+                                                {tab === 'overview' && user.role !== 'viewer_admin' && (
                                                     <td style={{ textAlign: 'center' }}>
                                                         <button
                                                             onClick={() => handleDeleteRecord(item.id)}
