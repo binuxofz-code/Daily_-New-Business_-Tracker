@@ -99,7 +99,7 @@ export default function LoginForm({ onLogin, onSwitch, theme, toggleTheme }) {
                 </form>
 
                 <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#6b7280' }}>
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <button
                         onClick={onSwitch}
                         className="text-link"

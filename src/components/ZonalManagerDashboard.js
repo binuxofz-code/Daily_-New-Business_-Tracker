@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Save, Calendar, BarChart2, Shield, LogOut, Sun, Moon } from 'lucide-react';
+import { Save, Calendar, BarChart2, Shield, LogOut, Sun, Moon } from 'lucide-react';
 
 export default function ZonalManagerDashboard({ user, onLogout, theme, toggleTheme }) {
     const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, summary

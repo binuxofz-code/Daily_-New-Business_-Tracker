@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { Users, MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 

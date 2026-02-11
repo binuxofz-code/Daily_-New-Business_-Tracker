@@ -8,45 +8,41 @@ import MemberDashboard from '@/components/MemberDashboard';
 import ZonalManagerDashboard from '@/components/ZonalManagerDashboard';
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('tracker_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          localStorage.removeItem('tracker_user');
+        }
+      }
+    }
+    return null;
+  });
+
   const [view, setView] = useState('login'); // login, signup
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('tracker_theme') || 'light';
+    }
+    return 'light';
+  });
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('tracker_theme') || 'light';
-    setTheme(savedTheme);
-    if (savedTheme === 'dark') {
+    if (theme === 'dark') {
       document.body.classList.add('dark');
     } else {
       document.body.classList.remove('dark');
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('tracker_theme', newTheme);
-    if (newTheme === 'dark') {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
   };
-
-  useEffect(() => {
-    // Check local storage for persistent login
-    // In a real app, we would verify the token with the server here
-    const saved = localStorage.getItem('tracker_user');
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch (e) {
-        localStorage.removeItem('tracker_user');
-      }
-    }
-
-    // Check if URL has a query for signup (e.g. invite links later)
-  }, []);
 
   const handleLogin = (userData) => {
     setUser(userData);

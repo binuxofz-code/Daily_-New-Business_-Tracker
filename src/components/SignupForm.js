@@ -92,7 +92,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                         </select>
                         {formData.role === 'zonal_manager' &&
                             <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                                Select "Zonal Manager" to manage a specific zone.
+                                Select &quot;Zonal Manager&quot; to manage a specific zone.
                             </p>
                         }
                     </div>
