@@ -4,8 +4,16 @@ import { useState, useEffect } from 'react';
 import { Sun, Moon, BarChart2, Save, LogOut, Calendar, User } from 'lucide-react';
 
 export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) {
+    // Get current date in SL timezone (YYYY-MM-DD)
+    const getSLDate = () => {
+        const d = new Date();
+        const offset = 5.5 * 60 * 60 * 1000; // SL is UTC+5:30
+        const localTime = new Date(d.getTime() + offset);
+        return localTime.toISOString().split('T')[0];
+    };
+
     const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(getSLDate());
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -21,7 +29,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
-            if (data.id) {
+            if (data && data.id) {
                 setRecord(data);
             } else {
                 setRecord({ morning_plan: '', actual_business: '' });
@@ -44,6 +52,11 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
     };
 
     const handleSave = async () => {
+        if (!record.morning_plan && activeTab === 'plan') {
+            alert('Please enter your plan first.');
+            return;
+        }
+
         setSaving(true);
         try {
             const res = await fetch('/api/records', {
@@ -52,18 +65,21 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                 body: JSON.stringify({
                     user_id: user.id,
                     date,
-                    morning_plan: record.morning_plan,
-                    actual_business: parseFloat(record.actual_business) || 0
+                    morning_plan: record.morning_plan || '',
+                    actual_business: parseFloat(record.actual_business) || 0,
+                    zone: user.zone || '',
+                    branch: user.branch || ''
                 })
             });
             if (res.ok) {
-                alert('Saved successfully!');
-                fetchRecord(); // Refresh to ensure sync
+                // Refresh local state immediately
+                await fetchRecord();
+                alert('Success: Your record has been saved and is now visible.');
             } else {
-                alert('Failed to save.');
+                alert('Failed to save. Please try again.');
             }
         } catch (e) {
-            alert('Error saving.');
+            alert('Error saving record.');
         } finally {
             setSaving(false);
         }
@@ -178,14 +194,20 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>Date</label>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                         <Calendar size={18} color="var(--text-muted)" />
                                         <input
                                             type="date"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
-                                            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-main)', width: '100%' }}
+                                            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-main)', width: '100%', fontSize: '0.85rem' }}
                                         />
+                                        <button
+                                            onClick={() => setDate(getSLDate())}
+                                            style={{ fontSize: '0.7rem', background: 'var(--bg-body)', border: '1px solid var(--border)', padding: '0.2rem 0.5rem', borderRadius: '4px', cursor: 'pointer', color: 'var(--accent-blue)', fontWeight: 600 }}
+                                        >
+                                            Today
+                                        </button>
                                     </div>
                                 </div>
                                 <div>
