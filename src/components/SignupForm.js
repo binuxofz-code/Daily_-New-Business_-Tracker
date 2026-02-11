@@ -56,7 +56,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Username</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Username</label>
                         <input
                             className="clean-input"
                             value={formData.username}
@@ -67,7 +67,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Password</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Password</label>
                         <input
                             type="password"
                             className="clean-input"
@@ -79,12 +79,12 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Role</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Role</label>
                         <select
                             className="clean-input"
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            style={{ background: 'white' }}
+                            style={{ background: 'var(--bg-input)' }}
                         >
                             <option value="member">Team Member</option>
                             <option value="zonal_manager">Zonal Manager</option>
@@ -102,7 +102,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     {formData.role !== 'member' && (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Zone</label>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Zone</label>
                                 <input
                                     className="clean-input"
                                     placeholder="e.g. West"
@@ -111,7 +111,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Branch</label>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Branch</label>
                                 <input
                                     className="clean-input"
                                     placeholder="e.g. NYC"
@@ -123,7 +123,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     )}
 
                     {formData.role === 'member' && (
-                        <p style={{ fontSize: '0.875rem', color: '#6b7280', textAlign: 'center', background: '#f3f4f6', padding: '0.75rem', borderRadius: '8px' }}>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', background: 'var(--bg-input)', padding: '0.75rem', borderRadius: '8px', border: '1px dashed var(--border)' }}>
                             Your Zone and Branch will be assigned by the Admin after registration.
                         </p>
                     )}
@@ -133,7 +133,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     </button>
                 </form>
 
-                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}>
+                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                     Already have an account?{' '}
                     <button
                         onClick={onSwitch}

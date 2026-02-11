@@ -67,7 +67,7 @@ export default function LoginForm({ onLogin, onSwitch, theme, toggleTheme }) {
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>
                             Username or Company Email
                         </label>
                         <input
@@ -81,7 +81,7 @@ export default function LoginForm({ onLogin, onSwitch, theme, toggleTheme }) {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>
                             Password
                         </label>
                         <input
@@ -99,7 +99,7 @@ export default function LoginForm({ onLogin, onSwitch, theme, toggleTheme }) {
                     </button>
                 </form>
 
-                <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#6b7280' }}>
+                <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                     Don&apos;t have an account?{' '}
                     <button
                         onClick={onSwitch}
