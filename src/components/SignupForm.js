@@ -1,8 +1,8 @@
 
 'use client';
-import { useState } from 'react';
+import { Sun, Moon } from 'lucide-react';
 
-export default function SignupForm({ onSignup, onSwitch }) {
+export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
     const [formData, setFormData] = useState({
         username: '', password: '', role: 'member', zone: '', branch: ''
     });
@@ -33,9 +33,18 @@ export default function SignupForm({ onSignup, onSwitch }) {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f3f4f6' }}>
-            <div className="clean-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '480px', background: 'white' }}>
-                <h2 className="text-h1" style={{ marginBottom: '0.5rem', textAlign: 'left' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-body)', position: 'relative' }}>
+            {/* Theme Toggle */}
+            <button
+                onClick={toggleTheme}
+                className="btn-secondary"
+                style={{ position: 'absolute', top: '2rem', right: '2rem', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+
+            <div className="clean-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '480px', background: 'var(--bg-card)' }}>
+                <h2 className="text-h1" style={{ marginBottom: '0.5rem', textAlign: 'left', color: 'var(--text-main)' }}>
                     Create Account
                 </h2>
                 <p className="text-muted" style={{ marginBottom: '2rem', textAlign: 'left' }}>

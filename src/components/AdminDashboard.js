@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { Users, MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield } from 'lucide-react';
+import { Users, MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-export default function AdminDashboard({ user, onLogout }) {
+export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
     const [tab, setTab] = useState('overview'); // overview, zone, branch, users
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -112,12 +112,12 @@ export default function AdminDashboard({ user, onLogout }) {
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: '#f3f4f6' },
-                ticks: { color: '#6b7280' }
+                grid: { color: 'var(--border)' },
+                ticks: { color: 'var(--text-muted)' }
             },
             x: {
                 grid: { display: false },
-                ticks: { color: '#6b7280' }
+                ticks: { color: 'var(--text-muted)' }
             }
         }
     };
@@ -126,16 +126,24 @@ export default function AdminDashboard({ user, onLogout }) {
     const activeAgents = tab === 'overview' ? data.length : data.reduce((acc, curr) => acc + (curr.agents || 0), 0);
 
     return (
-        <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
             {/* Header */}
-            <header className="dashboard-header">
+            <header className="dashboard-header" style={{ background: 'var(--bg-card)' }}>
                 <div>
                     <h1 className="text-h1">Daily Business Tracker</h1>
                     <p className="text-muted">Administrator Dashboard</p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eef2ff', padding: '0.5rem 1rem', borderRadius: '20px', color: '#4f46e5' }}>
+                    <button
+                        onClick={toggleTheme}
+                        className="btn-secondary"
+                        style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
                         <Shield size={16} />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>System Admin</span>
                     </div>

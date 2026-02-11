@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Sun, Moon, BarChart2, Save, LogOut, Calendar, User } from 'lucide-react';
 
-export default function MemberDashboard({ user, onLogout }) {
+export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) {
     const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
@@ -74,16 +74,24 @@ export default function MemberDashboard({ user, onLogout }) {
     };
 
     return (
-        <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
             {/* Header */}
-            <header className="dashboard-header">
+            <header className="dashboard-header" style={{ background: 'var(--bg-card)' }}>
                 <div>
                     <h1 className="text-h1">Daily Business Tracker</h1>
                     <p className="text-muted">Member Performance Portal</p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eef2ff', padding: '0.5rem 1rem', borderRadius: '20px', color: '#4f46e5' }}>
+                    <button
+                        onClick={toggleTheme}
+                        className="btn-secondary"
+                        style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
                         <User size={16} />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Team Member</span>
                     </div>
