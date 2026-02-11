@@ -99,3 +99,24 @@ export async function GET(request) {
 
     return NextResponse.json([]);
 }
+
+export async function DELETE(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+
+        const { error } = await supabase
+            .from('daily_records')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

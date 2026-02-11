@@ -85,6 +85,21 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         }
     };
 
+    const handleDeleteRecord = async (id) => {
+        if (!confirm('Are you sure you want to delete this record?')) return;
+        try {
+            const res = await fetch(`/api/records?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchStats();
+            } else {
+                alert('Failed to delete record');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting record');
+        }
+    };
+
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(val);
     };
@@ -399,6 +414,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                             <th>Agent Achievement</th>
                                             <th>Branch Achievement</th>
                                             <th style={{ textAlign: 'right' }}>Total Combined</th>
+                                            {tab === 'overview' && <th>Action</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -419,6 +435,17 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
                                                     {formatCurrency(item.total_business || item.actual_business || 0)}
                                                 </td>
+                                                {tab === 'overview' && (
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <button
+                                                            onClick={() => handleDeleteRecord(item.id)}
+                                                            style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }}
+                                                            title="Delete Record"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                         {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No records found for this date.</td></tr>}
