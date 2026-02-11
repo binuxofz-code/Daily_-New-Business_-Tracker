@@ -150,7 +150,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Administrator</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Administrator</div>
                     </div>
 
                     <button onClick={onLogout} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -181,13 +181,13 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
                 {tab !== 'users' && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                            <Calendar size={18} color="#6b7280" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-card)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                            <Calendar size={18} color="var(--text-muted)" />
                             <input
                                 type="date"
                                 value={filterDate}
                                 onChange={(e) => setFilterDate(e.target.value)}
-                                style={{ border: 'none', outline: 'none', fontSize: '0.9rem', color: '#374151' }}
+                                style={{ border: 'none', outline: 'none', fontSize: '0.9rem', color: 'var(--text-main)', background: 'transparent' }}
                             />
                         </div>
                     </div>
@@ -385,8 +385,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                     <tr>
                                         <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
                                         {tab === 'overview' && <th>Plan</th>}
-                                        {(tab === 'zone' || tab === 'branch') && <th>Agent Ach.</th>}
-                                        {(tab === 'zone' || tab === 'branch') && <th>BDO Perf.</th>}
+                                        {(tab === 'zone' || tab === 'branch') && <th>Agent Achievement</th>}
                                         <th>Total Business</th>
                                     </tr>
                                 </thead>
@@ -402,13 +401,8 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 </td>
                                             )}
                                             {(tab === 'zone' || tab === 'branch') && (
-                                                <td style={{ color: '#059669', fontWeight: 500 }}>
+                                                <td style={{ color: '#059669', fontWeight: 600 }}>
                                                     {formatCurrency(item.agent_achievement || 0)}
-                                                </td>
-                                            )}
-                                            {(tab === 'zone' || tab === 'branch') && (
-                                                <td style={{ color: '#0284c7', fontWeight: 500 }}>
-                                                    {formatCurrency(item.bdo_branch_performance || 0)}
                                                 </td>
                                             )}
                                             <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#111827' : '#374151' }}>

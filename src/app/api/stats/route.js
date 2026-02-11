@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 // import db from '@/lib/db';
 import supabase from '@/lib/supabase';
 
@@ -50,28 +51,24 @@ export async function GET(request) {
             const groups = {};
             filtered.forEach(r => {
                 const z = r.zone;
-                if (!groups[z]) groups[z] = { zone: z, branches: 0, aaf_agents: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
+                if (!groups[z]) groups[z] = { zone: z, branches: 0, agent_achievement: 0, total_business: 0 };
                 groups[z].branches++;
-                groups[z].aaf_agents += (r.aaf_agents || 0);
                 groups[z].agent_achievement += (r.agent_achievement || 0);
-                groups[z].bdo_branch_performance += (r.bdo_branch_performance || 0);
-                groups[z].total_business += ((r.agent_achievement || 0) + (r.bdo_branch_performance || 0));
+                groups[z].total_business += (r.agent_achievement || r.actual_business || 0);
             });
-            // Map for Admin dashboard compatibility (it expects "agents" field for some charts)
-            return NextResponse.json(Object.values(groups).map(g => ({ ...g, agents: g.aaf_agents })));
+            // Map for Admin dashboard compatibility
+            return NextResponse.json(Object.values(groups));
         }
 
         if (type === 'branch') {
             const groups = {};
             filtered.forEach(r => {
                 const b = r.branch;
-                if (!groups[b]) groups[b] = { branch: b, aaf_agents: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
-                groups[b].aaf_agents += (r.aaf_agents || 0);
+                if (!groups[b]) groups[b] = { branch: b, agent_achievement: 0, total_business: 0 };
                 groups[b].agent_achievement += (r.agent_achievement || 0);
-                groups[b].bdo_branch_performance += (r.bdo_branch_performance || 0);
-                groups[b].total_business += ((r.agent_achievement || 0) + (r.bdo_branch_performance || 0));
+                groups[b].total_business += (r.agent_achievement || r.actual_business || 0);
             });
-            return NextResponse.json(Object.values(groups).map(g => ({ ...g, agents: g.aaf_agents })));
+            return NextResponse.json(Object.values(groups));
         }
 
         // Overview / List

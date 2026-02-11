@@ -72,9 +72,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                         date,
                         zone_plan: record.zone_plan,
                         branch_plan: record.branch_plan,
-                        aaf_agents: parseInt(record.aaf_agents) || 0,
                         agent_achievement: parseFloat(record.agent_achievement) || 0,
-                        bdo_branch_performance: parseFloat(record.bdo_branch_performance) || 0,
                         zone: loc.zone,
                         branch: loc.branch
                     })
@@ -172,217 +170,169 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                         </p>
                     </div>
 
-                    <div style={{ marginBottom: '2rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                    <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'flex-start' }}>
                         <div>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>Select Date</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                                <Calendar size={18} color="#6b7280" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                <Calendar size={18} color="var(--text-muted)" />
                                 <input
                                     type="date"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '0.9rem', color: '#111827' }}
+                                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '0.9rem', color: 'var(--text-main)' }}
                                 />
                             </div>
                         </div>
+
+                        {/* Grand Totals KPI */}
+                        {(() => {
+                            let totalPlan = 0;
+                            let totalAch = 0;
+                            locations.forEach(loc => {
+                                const key = `${loc.zone}-${loc.branch}`;
+                                const rec = records[key] || {};
+                                totalPlan += parseFloat(rec.branch_plan) || 0;
+                                totalAch += parseFloat(rec.agent_achievement) || 0;
+                            });
+
+                            return (
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div style={{ background: '#f0fdf4', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #bbf7d0', minWidth: '180px' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Total Daily Plan</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534' }}>{formatCurrency(totalPlan)}</div>
+                                    </div>
+                                    <div style={{ background: '#eff6ff', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #bfdbfe', minWidth: '180px' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Total Achievement</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e40af' }}>{formatCurrency(totalAch)}</div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {locations.length === 0 ? (
-                        <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px' }}>
+                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-input)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
                             No branches assigned. Please contact Administrator.
                         </div>
                     ) : (
                         <div>
                             {/* Table Header */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr', padding: '0.75rem 1rem', borderBottom: '2px solid #f3f4f6', background: '#f9fafb', fontWeight: 600, fontSize: '0.85rem', color: '#6b7280', textTransform: 'uppercase' }}>
-                                <div>Zone / Branch</div>
-                                <div>Zone Plan</div>
-                                <div>Branch Plan</div>
-                                <div>Agent Ach.</div>
-                                <div>BDO Perf.</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '0.75rem 1rem', borderBottom: '2px solid var(--border)', background: 'var(--bg-input)', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                <div>Zone / Branch Name</div>
+                                <div style={{ textAlign: 'right' }}>Branch Plan (LKR)</div>
+                                <div style={{ textAlign: 'right' }}>Agent Achievement (LKR)</div>
                             </div>
 
                             {(() => {
                                 // Group locations by zone
                                 const zoneGroups = {};
                                 locations.forEach(loc => {
-                                    if (!zoneGroups[loc.zone]) {
-                                        zoneGroups[loc.zone] = [];
-                                    }
+                                    if (!zoneGroups[loc.zone]) zoneGroups[loc.zone] = [];
                                     zoneGroups[loc.zone].push(loc);
                                 });
 
-                                let rowIndex = 0;
+                                let globalIdx = 0;
                                 return Object.entries(zoneGroups).map(([zoneName, branches]) => {
                                     // Calculate zone totals
-                                    const zoneAgentTotal = branches.reduce((sum, loc) => {
+                                    const zonePlanTotal = branches.reduce((sum, loc) => {
+                                        const key = `${loc.zone}-${loc.branch}`;
+                                        const rec = records[key] || {};
+                                        return sum + (parseFloat(rec.branch_plan) || 0);
+                                    }, 0);
+
+                                    const zoneAchTotal = branches.reduce((sum, loc) => {
                                         const key = `${loc.zone}-${loc.branch}`;
                                         const rec = records[key] || {};
                                         return sum + (parseFloat(rec.agent_achievement) || 0);
                                     }, 0);
 
-                                    const zoneBDOTotal = branches.reduce((sum, loc) => {
-                                        const key = `${loc.zone}-${loc.branch}`;
-                                        const rec = records[key] || {};
-                                        return sum + (parseFloat(rec.bdo_branch_performance) || 0);
-                                    }, 0);
-
-                                    const zoneGrandTotal = zoneAgentTotal + zoneBDOTotal;
-
                                     return (
-                                        <div key={zoneName} style={{ marginBottom: '1rem' }}>
+                                        <div key={zoneName} style={{ marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
                                             {/* Zone Header Row */}
                                             <div style={{
                                                 display: 'grid',
-                                                gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr',
-                                                padding: '0.75rem 1rem',
-                                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                                gridTemplateColumns: '2fr 1fr 1fr',
+                                                padding: '1rem 1.25rem',
+                                                background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                                                 color: 'white',
                                                 fontWeight: 600,
                                                 alignItems: 'center'
                                             }}>
-                                                <div style={{ fontSize: '1rem' }}>📍 {zoneName} Zone</div>
-                                                <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{branches.length} Branches</div>
-                                                <div></div>
-                                                <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>
-                                                    {activeTab === 'summary' ? formatCurrency(zoneAgentTotal) : 'Agent Total'}
+                                                <div style={{ fontSize: '1.1rem' }}>📍 {zoneName} Zone</div>
+                                                <div style={{ textAlign: 'right', fontSize: '0.9rem', opacity: 0.9 }}>
+                                                    Plan Total: {formatCurrency(zonePlanTotal)}
                                                 </div>
-                                                <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>
-                                                    {activeTab === 'summary' ? formatCurrency(zoneBDOTotal) : 'BDO Total'}
+                                                <div style={{ textAlign: 'right', fontSize: '1rem', fontWeight: 800 }}>
+                                                    Ach Total: {formatCurrency(zoneAchTotal)}
                                                 </div>
                                             </div>
 
-                                            {/* Zone Grand Total Row */}
-                                            {activeTab === 'summary' && (
-                                                <div style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: '1.5fr 1fr 1fr 2fr',
-                                                    padding: '0.5rem 1rem',
-                                                    background: '#1e40af',
-                                                    color: 'white',
-                                                    fontWeight: 700,
-                                                    alignItems: 'center',
-                                                    fontSize: '1.05rem'
-                                                }}>
-                                                    <div></div>
-                                                    <div></div>
-                                                    <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Zone Total:</div>
-                                                    <div style={{ textAlign: 'right', paddingRight: '1rem' }}>
-                                                        {formatCurrency(zoneGrandTotal)}
-                                                    </div>
-                                                </div>
-                                            )}
-
                                             {/* Branch Rows */}
-                                            {branches.map((loc, idx) => {
+                                            {branches.map(loc => {
                                                 const key = `${loc.zone}-${loc.branch}`;
                                                 const rec = records[key] || {};
-                                                const bgColor = rowIndex % 2 === 0 ? 'white' : '#fafafa';
-                                                rowIndex++;
+                                                const isEven = globalIdx % 2 === 0;
+                                                globalIdx++;
 
                                                 return (
                                                     <div key={key} style={{
                                                         display: 'grid',
-                                                        gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr',
-                                                        padding: '1rem',
+                                                        gridTemplateColumns: '2fr 1fr 1fr',
+                                                        padding: '1rem 1.25rem',
                                                         alignItems: 'center',
                                                         borderBottom: '1px solid #f3f4f6',
-                                                        background: bgColor
+                                                        background: isEven ? 'white' : '#f9fafb'
                                                     }}>
-                                                        {/* Branch Name */}
-                                                        <div>
-                                                            <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#374151' }}>
-                                                                🏢 {loc.branch} Branch
-                                                            </div>
+                                                        <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#374151' }}>
+                                                            🏢 {loc.branch} Branch
                                                         </div>
 
-                                                        {/* Zone Plan */}
-                                                        <div style={{ paddingRight: '0.5rem' }}>
-                                                            {activeTab === 'plan' && idx === 0 ? (
-                                                                <input
-                                                                    className="clean-input"
-                                                                    placeholder="Zone target..."
-                                                                    value={rec.zone_plan || ''}
-                                                                    onChange={(e) => {
-                                                                        // Update zone plan for all branches in this zone
-                                                                        branches.forEach(b => {
-                                                                            handleInputChange(b.zone, b.branch, 'zone_plan', e.target.value);
-                                                                        });
-                                                                    }}
-                                                                    style={{ fontSize: '0.85rem', padding: '0.5rem' }}
-                                                                />
-                                                            ) : (
-                                                                <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                                                                    {rec.zone_plan || (idx === 0 ? '-' : '')}
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Branch Plan */}
-                                                        <div style={{ paddingRight: '0.5rem' }}>
+                                                        <div style={{ textAlign: 'right' }}>
                                                             {activeTab === 'plan' ? (
                                                                 <input
+                                                                    type="number"
                                                                     className="clean-input"
-                                                                    placeholder="Branch target..."
+                                                                    placeholder="0.00"
                                                                     value={rec.branch_plan || ''}
                                                                     onChange={(e) => handleInputChange(loc.zone, loc.branch, 'branch_plan', e.target.value)}
-                                                                    style={{ fontSize: '0.85rem', padding: '0.5rem' }}
+                                                                    style={{ fontSize: '0.85rem', padding: '0.4rem', textAlign: 'right', maxWidth: '140px', display: 'inline-block' }}
                                                                 />
                                                             ) : (
-                                                                <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                                                                    {rec.branch_plan || '-'}
+                                                                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                                                                    {formatCurrency(rec.branch_plan || 0)}
                                                                 </span>
                                                             )}
                                                         </div>
 
-
-
-                                                        {/* Agent Achievement */}
-                                                        <div>
+                                                        <div style={{ textAlign: 'right' }}>
                                                             {activeTab === 'achievement' ? (
                                                                 <input
                                                                     type="number"
                                                                     className="clean-input"
                                                                     placeholder="0.00"
-                                                                    style={{ fontWeight: 600, color: '#059669', fontSize: '0.85rem', padding: '0.5rem' }}
+                                                                    style={{ fontWeight: 600, color: '#059669', fontSize: '0.85rem', padding: '0.4rem', textAlign: 'right', maxWidth: '140px', display: 'inline-block' }}
                                                                     value={rec.agent_achievement || ''}
                                                                     onChange={(e) => handleInputChange(loc.zone, loc.branch, 'agent_achievement', e.target.value)}
                                                                 />
                                                             ) : (
-                                                                activeTab === 'summary' ? (
-                                                                    <span style={{ fontWeight: 600, color: (rec.agent_achievement > 0) ? '#059669' : '#6b7280', fontSize: '0.9rem' }}>
-                                                                        {formatCurrency(rec.agent_achievement || 0)}
-                                                                    </span>
-                                                                ) : (
-                                                                    <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px', color: '#6b7280' }}>Pending</span>
-                                                                )
-                                                            )}
-                                                        </div>
-
-                                                        {/* BDO Branch Performance */}
-                                                        <div>
-                                                            {activeTab === 'achievement' ? (
-                                                                <input
-                                                                    type="number"
-                                                                    className="clean-input"
-                                                                    placeholder="0.00"
-                                                                    style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.85rem', padding: '0.5rem' }}
-                                                                    value={rec.bdo_branch_performance || ''}
-                                                                    onChange={(e) => handleInputChange(loc.zone, loc.branch, 'bdo_branch_performance', e.target.value)}
-                                                                />
-                                                            ) : (
-                                                                activeTab === 'summary' ? (
-                                                                    <span style={{ fontWeight: 600, color: (rec.bdo_branch_performance > 0) ? '#0284c7' : '#6b7280', fontSize: '0.9rem' }}>
-                                                                        {formatCurrency(rec.bdo_branch_performance || 0)}
-                                                                    </span>
-                                                                ) : (
-                                                                    <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px', color: '#6b7280' }}>Pending</span>
-                                                                )
+                                                                <span style={{ fontWeight: 700, color: (rec.agent_achievement > 0) ? '#059669' : '#94a3b8', fontSize: '1rem' }}>
+                                                                    {formatCurrency(rec.agent_achievement || 0)}
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>
                                                 );
                                             })}
+
+                                            {/* Progress bar in summary */}
+                                            {activeTab === 'summary' && (
+                                                <div style={{ padding: '0.5rem 1.25rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
+                                                    <span style={{ color: '#64748b' }}>Achievement Rate:</span>
+                                                    <span style={{ fontWeight: 700, color: '#1e40af' }}>
+                                                        {zonePlanTotal > 0 ? ((zoneAchTotal / zonePlanTotal) * 100).toFixed(1) : 0}%
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 });
@@ -398,26 +348,13 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                 className="btn-primary"
                                 style={{ width: 'auto', paddingLeft: '2rem', paddingRight: '2rem' }}
                             >
-                                {saving ? (
-                                    'Saving...'
-                                ) : (
+                                {saving ? 'Saving...' : (
                                     <>
                                         <Save size={18} style={{ marginRight: '0.5rem' }} />
-                                        Save {activeTab === 'plan' ? 'Plans' : 'Achievements'}
+                                        Save {activeTab === 'plan' ? 'Daily Plan' : 'Business Achievement'}
                                     </>
                                 )}
                             </button>
-                        </div>
-                    )}
-
-                    {activeTab === 'summary' && locations.length > 0 && (
-                        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#0369a1', fontWeight: 600 }}>Total Zone Achievement Today</span>
-                                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0284c7' }}>
-                                    {formatCurrency(Object.values(records).reduce((acc, r) => acc + (parseFloat(r.actual_business) || 0), 0))}
-                                </span>
-                            </div>
                         </div>
                     )}
                 </div>
