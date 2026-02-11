@@ -214,9 +214,19 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 <tbody>
                                     {allUsers.map(u => (
                                         <tr key={u.id}>
-                                            <td style={{ fontWeight: 600 }}>{u.username}</td>
+                                            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{u.username}</td>
                                             <td>
-                                                <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#f3f4f6', borderRadius: '4px', color: '#4b5563', textTransform: 'capitalize' }}>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.25rem 0.6rem',
+                                                    background: 'rgba(59, 130, 246, 0.1)',
+                                                    borderRadius: '12px',
+                                                    color: 'var(--accent-blue)',
+                                                    textTransform: 'uppercase',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.02em',
+                                                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                                                }}>
                                                     {u.role.replace('_', ' ')}
                                                 </span>
                                             </td>
@@ -226,14 +236,23 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 {editingUser === u.id ? (
                                                     u.role === 'zonal_manager' ? (
                                                         <div style={{ fontSize: '0.85rem' }}>
-                                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600 }}>Allocated Branches:</div>
-                                                            <div style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '0.5rem', marginBottom: '0.5rem', maxHeight: '120px', overflowY: 'auto', background: '#fafafa' }}>
+                                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Allocated Branches:</div>
+                                                            <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', marginBottom: '0.75rem', maxHeight: '150px', overflowY: 'auto', background: 'var(--bg-input)' }}>
                                                                 {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).map((loc, idx) => (
-                                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0.5rem', marginBottom: '0.25rem', background: 'white', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+                                                                    <div key={idx} style={{
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'center',
+                                                                        padding: '0.4rem 0.75rem',
+                                                                        marginBottom: '0.4rem',
+                                                                        background: 'var(--bg-card)',
+                                                                        borderRadius: '6px',
+                                                                        border: '1px solid var(--border)'
+                                                                    }}>
                                                                         <div>
-                                                                            <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 600 }}>{loc.zone}</span>
-                                                                            <span style={{ margin: '0 0.5rem', color: '#d1d5db' }}>→</span>
-                                                                            <span style={{ fontSize: '0.85rem', color: '#374151' }}>{loc.branch}</span>
+                                                                            <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)', fontWeight: 700, textTransform: 'uppercase' }}>{loc.zone}</span>
+                                                                            <span style={{ margin: '0 0.5rem', color: 'var(--text-muted)' }}>•</span>
+                                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>{loc.branch}</span>
                                                                         </div>
                                                                         <button onClick={() => {
                                                                             const current = JSON.parse(editForm.managed_locations);
@@ -242,40 +261,30 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                                         }} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0 0.25rem' }}>×</button>
                                                                     </div>
                                                                 ))}
-                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).length === 0 && <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>No branches allocated yet</span>}
+                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).length === 0 && <div style={{ opacity: 0.5, fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>No branches allocated yet</div>}
                                                             </div>
 
                                                             {/* Add New Zone/Branch */}
-                                                            <div style={{ background: '#f9fafb', padding: '0.75rem', borderRadius: '6px', border: '1px dashed #d1d5db' }}>
-                                                                <div style={{ marginBottom: '0.5rem' }}>
-                                                                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem', color: '#6b7280' }}>Zone Name</label>
-                                                                    <input
-                                                                        id={`z-${u.id}`}
-                                                                        placeholder="e.g., Western, Central, Southern"
-                                                                        className="clean-input"
-                                                                        style={{ padding: '0.4rem', fontSize: '0.85rem', width: '100%' }}
-                                                                    />
-                                                                </div>
-                                                                <div style={{ marginBottom: '0.5rem' }}>
-                                                                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem', color: '#6b7280' }}>Branch Name</label>
-                                                                    <input
-                                                                        id={`b-${u.id}`}
-                                                                        placeholder="e.g., Colombo, Kandy, Galle"
-                                                                        className="clean-input"
-                                                                        style={{ padding: '0.4rem', fontSize: '0.85rem', width: '100%' }}
-                                                                        onKeyPress={(e) => {
-                                                                            if (e.key === 'Enter') {
-                                                                                const z = document.getElementById(`z-${u.id}`).value;
-                                                                                const b = document.getElementById(`b-${u.id}`).value;
-                                                                                if (z && b) {
-                                                                                    const current = JSON.parse(editForm.managed_locations || '[]');
-                                                                                    current.push({ zone: z, branch: b });
-                                                                                    setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
-                                                                                    document.getElementById(`b-${u.id}`).value = '';
-                                                                                }
-                                                                            }
-                                                                        }}
-                                                                    />
+                                                            <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '10px', border: '1px dashed var(--accent-blue)', opacity: 0.9 }}>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                                                    <div>
+                                                                        <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Zone</label>
+                                                                        <input
+                                                                            id={`z-${u.id}`}
+                                                                            placeholder="e.g., Western"
+                                                                            className="clean-input"
+                                                                            style={{ padding: '0.5rem', fontSize: '0.85rem' }}
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Branch</label>
+                                                                        <input
+                                                                            id={`b-${u.id}`}
+                                                                            placeholder="e.g., Colombo"
+                                                                            className="clean-input"
+                                                                            style={{ padding: '0.5rem', fontSize: '0.85rem' }}
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                                 <button onClick={() => {
                                                                     const z = document.getElementById(`z-${u.id}`).value;
@@ -285,138 +294,143 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                                         current.push({ zone: z, branch: b });
                                                                         setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
                                                                         document.getElementById(`b-${u.id}`).value = '';
+                                                                        document.getElementById(`z-${u.id}`).value = '';
                                                                     } else {
                                                                         alert('Please enter both Zone and Branch names');
                                                                     }
-                                                                }} style={{
-                                                                    background: '#3b82f6',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '4px',
-                                                                    cursor: 'pointer',
-                                                                    padding: '0.4rem 0.75rem',
-                                                                    fontSize: '0.8rem',
-                                                                    fontWeight: 600,
-                                                                    width: '100%'
-                                                                }}>+ Add Branch</button>
-                                                                <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.5rem', marginBottom: 0 }}>
-                                                                    💡 Tip: Keep the same zone name to add multiple branches to one zone
-                                                                </p>
+                                                                }} className="btn-primary" style={{ padding: '0.5rem', fontSize: '0.85rem', height: 'auto' }}>+ Add Branch</button>
                                                             </div>
+                                                            <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.5rem', marginBottom: 0 }}>
+                                                                💡 Tip: Keep the same zone name to add multiple branches to one zone
+                                                            </p>
                                                         </div>
-                                                    ) : (
-                                                        <input
-                                                            className="clean-input"
-                                                            value={editForm.zone}
-                                                            onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
-                                                            placeholder="Zone"
-                                                        />
-                                                    )
-                                                ) : (
-                                                    u.role === 'zonal_manager' ? (
-                                                        <span style={{ color: '#6b7280' }}>
-                                                            {(u.managed_locations ? JSON.parse(u.managed_locations).length : 0)} Branches
-                                                        </span>
-                                                    ) : (u.zone || '-')
+                                                        </div>
+                                            ) : (
+                                            <input
+                                                className="clean-input"
+                                                value={editForm.zone}
+                                                onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                                                placeholder="Zone"
+                                            />
+                                            )
+                                            ) : (
+                                            u.role === 'zonal_manager' ? (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                                {(u.managed_locations ? JSON.parse(u.managed_locations) : []).map((loc, i) => (
+                                                    <span key={i} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)' }}>
+                                                        {loc.zone}
+                                                    </span>
+                                                ))}
+                                                {(u.managed_locations ? JSON.parse(u.managed_locations) : []).length === 0 && <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>None</span>}
+                                            </div>
+                                            ) : (u.zone || '-')
                                                 )}
-                                            </td>
+                                        </td>
 
-                                            {/* Branch */}
-                                            <td>
-                                                {editingUser === u.id && u.role !== 'zonal_manager' ? (
-                                                    <input
-                                                        className="clean-input"
-                                                        value={editForm.branch}
-                                                        onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                                                        placeholder="Branch"
-                                                    />
-                                                ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
-                                            </td>
+                                            {/* Branch */ }
+                                            < td >
+                                            { editingUser === u.id && u.role !== 'zonal_manager' ? (
+                                            <input
+                                                className="clean-input"
+                                                value={editForm.branch}
+                                                onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                                placeholder="Branch"
+                                            />
+                                        ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
+                                </td>
 
-                                            <td>
-                                                {editingUser === u.id ? (
-                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                        <button onClick={() => saveUser(u.id)} style={{ color: '#059669', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
-                                                        <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
-                                                )}
-                                            </td>
-                                        </tr>
+                                <td>
+                                    {editingUser === u.id ? (
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button onClick={() => saveUser(u.id)} style={{ color: '#059669', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                                            <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
+                                    )}
+                                </td>
+                            </tr>
                                     ))}
-                                </tbody>
-                            </table>
+                        </tbody>
+                    </table>
                         </div>
-                    </div>
+                    </div >
                 ) : (
-                    <>
-                        {/* KPI Cards */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                            <div className="clean-card" style={{ padding: '1.5rem' }}>
-                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Total Business Today</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem' }}>
-                                    {formatCurrency(totalBusiness)}
-                                </div>
-                            </div>
-                            <div className="clean-card" style={{ padding: '1.5rem' }}>
-                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Total Reported Branches/Units</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem' }}>
-                                    {data.length}
-                                </div>
-                            </div>
-                        </div>
+        <>
+            {/* KPI Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Business Today</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
+                        {formatCurrency(totalBusiness)}
+                    </div>
+                </div>
+                <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Reported Units</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
+                        {data.length}
+                    </div>
+                </div>
+            </div>
 
-                        {/* Chart */}
-                        <div className="clean-card animate-fade-in" style={{ height: '400px', marginBottom: '2rem' }}>
-                            <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Performance Trends</h3>
-                            {data.length > 0 ? (
-                                <Bar data={barData} options={chartOptions} />
-                            ) : (
-                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No data available</div>
-                            )}
-                        </div>
-
-                        {/* Data Table */}
-                        <div className="clean-card animate-fade-in">
-                            <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Detailed Breakdown</h3>
-                            <table className="clean-table">
-                                <thead>
-                                    <tr>
-                                        <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                        {tab === 'overview' && <th>Plan</th>}
-                                        {(tab === 'zone' || tab === 'branch') && <th>Agent Achievement</th>}
-                                        <th>Total Business</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {data.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td style={{ fontWeight: 500 }}>
-                                                {tab === 'zone' ? item.zone : (tab === 'branch' ? item.branch : item.username)}
-                                            </td>
-                                            {tab === 'overview' && (
-                                                <td style={{ color: '#6b7280' }}>
-                                                    {item.morning_plan || '-'}
-                                                </td>
-                                            )}
-                                            {(tab === 'zone' || tab === 'branch') && (
-                                                <td style={{ color: '#059669', fontWeight: 600 }}>
-                                                    {formatCurrency(item.agent_achievement || 0)}
-                                                </td>
-                                            )}
-                                            <td style={{ fontWeight: 600, color: (item.total_business || item.actual_business) > 0 ? '#111827' : '#374151' }}>
-                                                {formatCurrency(item.total_business || item.actual_business || 0)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {data.length === 0 && <tr><td colSpan={tab === 'overview' ? 3 : 5} style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>No records</td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
+            {/* Chart */}
+            <div className="clean-card animate-fade-in" style={{ height: '400px', marginBottom: '2rem' }}>
+                <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Performance Trends</h3>
+                {data.length > 0 ? (
+                    <Bar data={barData} options={chartOptions} />
+                ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No data available</div>
                 )}
-            </main>
-        </div>
+            </div>
+
+            {/* Data Table */}
+            <div className="clean-card animate-fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 className="text-h2">Detailed Performance Breakdown</h3>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        Showing {data.length} records for {filterDate}
+                    </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="clean-table">
+                        <thead>
+                            <tr>
+                                <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
+                                <th>Target (Plan)</th>
+                                <th>Agent Achievement</th>
+                                <th>Branch Achievement</th>
+                                <th style={{ textAlign: 'right' }}>Total Combined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item, idx) => (
+                                <tr key={idx}>
+                                    <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                                        {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : `👤 ${item.username}`)}
+                                    </td>
+                                    <td style={{ color: 'var(--text-muted)' }}>
+                                        {formatCurrency(item.plan || item.morning_plan || 0)}
+                                    </td>
+                                    <td style={{ color: '#059669', fontWeight: 600 }}>
+                                        {formatCurrency(item.agent_achievement || 0)}
+                                    </td>
+                                    <td style={{ color: '#0284c7', fontWeight: 600 }}>
+                                        {formatCurrency(item.bdo_branch_performance || 0)}
+                                    </td>
+                                    <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
+                                        {formatCurrency(item.total_business || item.actual_business || 0)}
+                                    </td>
+                                </tr>
+                            ))}
+                            {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No records found for this date.</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </>
+    )
+}
+            </main >
+        </div >
     );
 }

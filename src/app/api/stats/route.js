@@ -51,12 +51,13 @@ export async function GET(request) {
             const groups = {};
             filtered.forEach(r => {
                 const z = r.zone;
-                if (!groups[z]) groups[z] = { zone: z, branches: 0, agent_achievement: 0, total_business: 0 };
+                if (!groups[z]) groups[z] = { zone: z, branches: 0, plan: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
                 groups[z].branches++;
-                groups[z].agent_achievement += (r.agent_achievement || 0);
-                groups[z].total_business += (r.agent_achievement || r.actual_business || 0);
+                groups[z].plan += (parseFloat(r.branch_plan) || 0);
+                groups[z].agent_achievement += (parseFloat(r.agent_achievement) || 0);
+                groups[z].bdo_branch_performance += (parseFloat(r.bdo_branch_performance) || 0);
+                groups[z].total_business += (parseFloat(r.agent_achievement) || 0) + (parseFloat(r.bdo_branch_performance) || 0);
             });
-            // Map for Admin dashboard compatibility
             return NextResponse.json(Object.values(groups));
         }
 
@@ -64,9 +65,11 @@ export async function GET(request) {
             const groups = {};
             filtered.forEach(r => {
                 const b = r.branch;
-                if (!groups[b]) groups[b] = { branch: b, agent_achievement: 0, total_business: 0 };
-                groups[b].agent_achievement += (r.agent_achievement || 0);
-                groups[b].total_business += (r.agent_achievement || r.actual_business || 0);
+                if (!groups[b]) groups[b] = { branch: b, plan: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
+                groups[b].plan += (parseFloat(r.branch_plan) || 0);
+                groups[b].agent_achievement += (parseFloat(r.agent_achievement) || 0);
+                groups[b].bdo_branch_performance += (parseFloat(r.bdo_branch_performance) || 0);
+                groups[b].total_business += (parseFloat(r.agent_achievement) || 0) + (parseFloat(r.bdo_branch_performance) || 0);
             });
             return NextResponse.json(Object.values(groups));
         }

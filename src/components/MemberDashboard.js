@@ -97,8 +97,8 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>{user.username}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                             {user.branch ? user.branch : 'No Branch'} • {user.zone ? user.zone : 'No Zone'}
                         </div>
                     </div>
@@ -156,20 +156,20 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>Date</label>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f3f4f6', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                                        <Calendar size={18} color="#6b7280" />
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>Date</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                        <Calendar size={18} color="var(--text-muted)" />
                                         <input
                                             type="date"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
-                                            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#111827', width: '100%' }}
+                                            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-main)', width: '100%' }}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>Branch Information</label>
-                                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px', border: '1px dashed #d1d5db', color: '#6b7280', fontSize: '0.9rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>Branch Information</label>
+                                    <div style={{ padding: '0.75rem', background: 'var(--bg-input)', borderRadius: '8px', border: '1px dashed var(--border)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                                         {user.branch} Branch / {user.zone} Zone
                                     </div>
                                 </div>
@@ -177,7 +177,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
 
                             {activeTab === 'plan' && (
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>Daily New Business Plan</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Daily New Business Plan</label>
                                     <textarea
                                         className="clean-input"
                                         rows={4}
@@ -190,7 +190,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
 
                             {activeTab === 'achievement' && (
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>Actual Business Achieved (LKR)</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Actual Business Achieved (LKR)</label>
                                     <input
                                         type="number"
                                         className="clean-input"
@@ -225,19 +225,21 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                                 <tbody>
                                     {history.map((h, i) => (
                                         <tr key={i}>
-                                            <td style={{ fontWeight: 500 }}>{h.date}</td>
-                                            <td style={{ color: '#6b7280', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.morning_plan || '-'}</td>
-                                            <td style={{ fontWeight: 600, color: h.actual_business > 0 ? '#059669' : '#374151' }}>
+                                            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{h.date}</td>
+                                            <td style={{ color: 'var(--text-muted)', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.morning_plan || '-'}</td>
+                                            <td style={{ fontWeight: 700, color: h.actual_business > 0 ? '#059669' : 'var(--text-muted)' }}>
                                                 {formatCurrency(h.actual_business || 0)}
                                             </td>
                                             <td>
                                                 <span style={{
-                                                    fontSize: '0.75rem',
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: '99px',
-                                                    background: h.actual_business ? '#ecfdf5' : '#f3f4f6',
-                                                    color: h.actual_business ? '#047857' : '#6b7280',
-                                                    fontWeight: 600
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.25rem 0.6rem',
+                                                    borderRadius: '12px',
+                                                    background: h.actual_business ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-input)',
+                                                    color: h.actual_business ? '#059669' : 'var(--text-muted)',
+                                                    fontWeight: 700,
+                                                    textTransform: 'uppercase',
+                                                    border: h.actual_business ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border)'
                                                 }}>
                                                     {h.actual_business ? 'Completed' : 'Pending'}
                                                 </span>
