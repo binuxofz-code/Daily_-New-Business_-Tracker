@@ -114,6 +114,27 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             </header>
 
             <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
+                {/* Daily Performance KPI */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Today's Target (Plan)</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                            {record.morning_plan ? 'SET' : 'PENDING'}
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                            {record.morning_plan ? record.morning_plan : 'Please enter your plan for today'}
+                        </p>
+                    </div>
+                    <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Achievement Today (LKR)</div>
+                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>
+                            {formatCurrency(record.actual_business || 0)}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+                            Status: <span style={{ color: record.actual_business > 0 ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{record.actual_business > 0 ? 'Achievement Recorded' : 'Awaiting Evening Update'}</span>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Tabs */}
                 <div className="nav-tabs">
