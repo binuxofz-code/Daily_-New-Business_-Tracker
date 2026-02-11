@@ -78,58 +78,26 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                         />
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Role</label>
-                        <select
-                            className="clean-input"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            style={{ background: 'var(--bg-input)' }}
-                        >
-                            <option value="member">Team Member</option>
-                            <option value="zonal_manager">Zonal Manager</option>
-                            <option value="head">Department Head</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        {formData.role === 'zonal_manager' &&
-                            <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                                Select &quot;Zonal Manager&quot; to manage a specific zone.
-                            </p>
-                        }
+                    <div style={{ display: 'none' }}>
+                        <input type="hidden" value="member" />
                     </div>
 
-                    {/* Only show Zone/Branch input for Zonal Manager or Admin/Heads if needed. */}
-                    {formData.role !== 'member' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Zone</label>
-                                <input
-                                    className="clean-input"
-                                    placeholder="e.g. West"
-                                    value={formData.zone}
-                                    onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', opacity: 0.8 }}>Branch</label>
-                                <input
-                                    className="clean-input"
-                                    placeholder="e.g. NYC"
-                                    value={formData.branch}
-                                    onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {formData.role === 'member' && (
-                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', background: 'var(--bg-input)', padding: '0.75rem', borderRadius: '8px', border: '1px dashed var(--border)' }}>
-                            Your Zone and Branch will be assigned by the Admin after registration.
+                    <div style={{
+                        background: 'rgba(59, 130, 246, 0.05)',
+                        padding: '1.25rem',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(59, 130, 246, 0.1)',
+                        textAlign: 'center'
+                    }}>
+                        <Shield size={24} color="var(--accent-blue)" style={{ marginBottom: '0.75rem', margin: '0 auto' }} />
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600, marginBottom: '0.25rem' }}>Account Security</p>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                            For security purposes, your <b>Zone</b> and <b>Branch</b> will be assigned by the Administrator after you register.
                         </p>
-                    )}
+                    </div>
 
                     <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }} disabled={loading}>
-                        {loading ? 'Creating...' : 'Sign Up'}
+                        {loading ? 'Creating Account...' : 'Register as Team Member'}
                     </button>
                 </form>
 

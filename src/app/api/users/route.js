@@ -24,11 +24,12 @@ export async function GET(request) {
 
 export async function PUT(request) {
     try {
-        const { id, zone, branch, managed_locations } = await request.json();
+        const { id, role, zone, branch, managed_locations } = await request.json();
 
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
         const updates = {};
+        if (role !== undefined) updates.role = role;
         if (zone !== undefined) updates.zone = zone;
         if (branch !== undefined) updates.branch = branch;
         if (managed_locations !== undefined) updates.managed_locations = managed_locations;
@@ -36,6 +37,27 @@ export async function PUT(request) {
         const { error } = await supabase
             .from('users')
             .update(updates)
+            .eq('id', id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+
+        const { error } = await supabase
+            .from('users')
+            .delete()
             .eq('id', id);
 
         if (error) throw error;

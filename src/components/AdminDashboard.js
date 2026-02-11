@@ -65,6 +65,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         setEditingUser(u.id);
         const locs = u.managed_locations || '[]';
         setEditForm({
+            role: u.role || 'member',
             zone: u.zone || '',
             branch: u.branch || '',
             managed_locations: locs
@@ -82,6 +83,21 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
             fetchUsers();
         } catch (e) {
             alert('Failed to save');
+        }
+    };
+
+    const deleteUser = async (id) => {
+        if (!confirm('Warning: This will permanently delete this user account. Are you sure?')) return;
+        try {
+            const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchUsers();
+            } else {
+                alert('Failed to delete user');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting user');
         }
     };
 
@@ -231,19 +247,33 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                         <tr key={u.id}>
                                             <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{u.username}</td>
                                             <td>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    padding: '0.25rem 0.6rem',
-                                                    background: 'rgba(59, 130, 246, 0.1)',
-                                                    borderRadius: '12px',
-                                                    color: 'var(--accent-blue)',
-                                                    textTransform: 'uppercase',
-                                                    fontWeight: 700,
-                                                    letterSpacing: '0.02em',
-                                                    border: '1px solid rgba(59, 130, 246, 0.2)'
-                                                }}>
-                                                    {u.role.replace('_', ' ')}
-                                                </span>
+                                                {editingUser === u.id ? (
+                                                    <select
+                                                        className="clean-input"
+                                                        style={{ padding: '0.25rem', fontSize: '0.8rem' }}
+                                                        value={editForm.role}
+                                                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                                                    >
+                                                        <option value="member">Member</option>
+                                                        <option value="zonal_manager">Zon. Manager</option>
+                                                        <option value="head">Head</option>
+                                                        <option value="admin">Admin</option>
+                                                    </select>
+                                                ) : (
+                                                    <span style={{
+                                                        fontSize: '0.7rem',
+                                                        padding: '0.25rem 0.6rem',
+                                                        background: 'rgba(59, 130, 246, 0.1)',
+                                                        borderRadius: '12px',
+                                                        color: 'var(--accent-blue)',
+                                                        textTransform: 'uppercase',
+                                                        fontWeight: 700,
+                                                        letterSpacing: '0.02em',
+                                                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                                                    }}>
+                                                        {u.role.replace('_', ' ')}
+                                                    </span>
+                                                )}
                                             </td>
 
                                             {/* Zone/Allocations */}
@@ -360,7 +390,10 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                         <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
                                                     </div>
                                                 ) : (
-                                                    <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
+                                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                                        <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
+                                                        <button onClick={() => deleteUser(u.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }} title="Delete User">Delete</button>
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>
