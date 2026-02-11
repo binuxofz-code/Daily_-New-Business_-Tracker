@@ -213,7 +213,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                             const grandTotal = totalAgentAch + totalBranchAch;
 
                             return (
-                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                <div className="kpi-grid" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                                     <div style={{ background: 'var(--bg-input)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border)', minWidth: '160px' }}>
                                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Total Plan (LKR)</div>
                                         <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>{formatCurrency(totalPlan)}</div>

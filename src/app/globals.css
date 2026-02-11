@@ -202,47 +202,50 @@ body {
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem;
+    align-items: center;
+    /* Centered for better mobile feel */
+    text-align: center;
+    gap: 1.5rem;
+    padding: 1.5rem 1rem;
   }
 
   .dashboard-header>div:last-child {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
     flex-wrap: wrap;
+    gap: 1rem;
   }
 
   .nav-tabs {
     width: 100%;
     overflow-x: auto;
-    white-space: nowrap;
     display: flex;
-    /* Ensure it stays flex even when overflowing */
+    justify-content: flex-start;
+    padding: 0.4rem;
     margin: 1rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-tab {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    flex-shrink: 0;
+    flex: 1 0 auto;
+    justify-content: center;
+    padding: 0.6rem 1rem;
   }
 
   .clean-card {
-    padding: 1rem;
+    padding: 1.25rem;
+    border-radius: 16px;
+    /* Slightly rounder for modern feel */
   }
 
   .card-header-accent {
-    margin: -1rem -1rem 1rem -1rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .text-h1 {
-    font-size: 1.25rem;
-  }
-
-  .text-h2 {
-    font-size: 1.1rem;
+    margin: -1.25rem -1.25rem 1.25rem -1.25rem;
+    padding: 1rem 1.25rem;
   }
 
   /* Responsive Tables */
@@ -251,18 +254,18 @@ body {
     -webkit-overflow-scrolling: touch;
     width: 100%;
     margin-bottom: 1rem;
+    border-radius: 8px;
   }
 
   .clean-table {
-    min-width: 600px;
-    /* Force scroll on small screens */
+    min-width: 700px;
   }
 
   /* Dashboard specific grids */
   .branch-grid,
   .zone-header-grid {
     grid-template-columns: 1fr !important;
-    gap: 0.75rem !important;
+    gap: 1rem !important;
   }
 
   .branch-grid>div,
@@ -273,13 +276,16 @@ body {
   .branch-grid input {
     max-width: 100% !important;
     width: 100% !important;
+    font-size: 1rem !important;
+    /* Prevents iOS zoom */
   }
 
   .auth-card {
-    padding: 1.5rem !important;
-    border: none !important;
-    border-radius: 0 !important;
+    padding: 2rem 1.5rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
     min-height: 100vh;
+    border-radius: 0 !important;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -293,17 +299,42 @@ body {
     top: 1rem !important;
     right: 1rem !important;
   }
+
+  /* Specific Centering Fixes */
+  .kpi-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    width: 100%;
+  }
+
+  .kpi-grid>div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Responsive Grid Utility */
+  .responsive-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
 }
 
 @media (max-width: 480px) {
   main {
-    padding: 1rem !important;
+    padding: 1rem 0.75rem !important;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.4rem;
   }
 
   .btn-primary,
   .btn-secondary {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
 }
 
