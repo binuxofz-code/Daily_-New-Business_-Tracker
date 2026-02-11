@@ -304,132 +304,131 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                                 💡 Tip: Keep the same zone name to add multiple branches to one zone
                                                             </p>
                                                         </div>
+                                                    ) : (
+                                                        <input
+                                                            className="clean-input"
+                                                            value={editForm.zone}
+                                                            onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                                                            placeholder="Zone"
+                                                        />
+                                                    )
+                                                ) : (
+                                                    u.role === 'zonal_manager' ? (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                                            {(u.managed_locations ? JSON.parse(u.managed_locations) : []).map((loc, i) => (
+                                                                <span key={i} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)' }}>
+                                                                    {loc.zone}
+                                                                </span>
+                                                            ))}
+                                                            {(u.managed_locations ? JSON.parse(u.managed_locations) : []).length === 0 && <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>None</span>}
                                                         </div>
-                                            ) : (
-                                            <input
-                                                className="clean-input"
-                                                value={editForm.zone}
-                                                onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
-                                                placeholder="Zone"
-                                            />
-                                            )
-                                            ) : (
-                                            u.role === 'zonal_manager' ? (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                                {(u.managed_locations ? JSON.parse(u.managed_locations) : []).map((loc, i) => (
-                                                    <span key={i} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)' }}>
-                                                        {loc.zone}
-                                                    </span>
-                                                ))}
-                                                {(u.managed_locations ? JSON.parse(u.managed_locations) : []).length === 0 && <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>None</span>}
-                                            </div>
-                                            ) : (u.zone || '-')
+                                                    ) : (u.zone || '-')
                                                 )}
-                                        </td>
+                                            </td>
 
-                                            {/* Branch */ }
+                                            {/* Branch */}
                                             < td >
-                                            { editingUser === u.id && u.role !== 'zonal_manager' ? (
-                                            <input
-                                                className="clean-input"
-                                                value={editForm.branch}
-                                                onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                                                placeholder="Branch"
-                                            />
-                                        ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
-                                </td>
+                                                {editingUser === u.id && u.role !== 'zonal_manager' ? (
+                                                    <input
+                                                        className="clean-input"
+                                                        value={editForm.branch}
+                                                        onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                                        placeholder="Branch"
+                                                    />
+                                                ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
+                                            </td>
 
-                                <td>
-                                    {editingUser === u.id ? (
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button onClick={() => saveUser(u.id)} style={{ color: '#059669', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
-                                            <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
-                                    )}
-                                </td>
-                            </tr>
+                                            <td>
+                                                {editingUser === u.id ? (
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        <button onClick={() => saveUser(u.id)} style={{ color: '#059669', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                                                        <button onClick={() => setEditingUser(null)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => handleEditUser(u)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Edit</button>
+                                                )}
+                                            </td>
+                                        </tr>
                                     ))}
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
                         </div>
                     </div >
                 ) : (
-        <>
-            {/* KPI Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Business Today</div>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
-                        {formatCurrency(totalBusiness)}
-                    </div>
-                </div>
-                <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Reported Units</div>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
-                        {data.length}
-                    </div>
-                </div>
-            </div>
+                    <>
+                        {/* KPI Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                            <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Business Today</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
+                                    {formatCurrency(totalBusiness)}
+                                </div>
+                            </div>
+                            <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Reported Units</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
+                                    {data.length}
+                                </div>
+                            </div>
+                        </div>
 
-            {/* Chart */}
-            <div className="clean-card animate-fade-in" style={{ height: '400px', marginBottom: '2rem' }}>
-                <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Performance Trends</h3>
-                {data.length > 0 ? (
-                    <Bar data={barData} options={chartOptions} />
-                ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No data available</div>
-                )}
-            </div>
+                        {/* Chart */}
+                        <div className="clean-card animate-fade-in" style={{ height: '400px', marginBottom: '2rem' }}>
+                            <h3 className="text-h2" style={{ marginBottom: '1.5rem' }}>Performance Trends</h3>
+                            {data.length > 0 ? (
+                                <Bar data={barData} options={chartOptions} />
+                            ) : (
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No data available</div>
+                            )}
+                        </div>
 
-            {/* Data Table */}
-            <div className="clean-card animate-fade-in">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3 className="text-h2">Detailed Performance Breakdown</h3>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        Showing {data.length} records for {filterDate}
-                    </div>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="clean-table">
-                        <thead>
-                            <tr>
-                                <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                <th>Target (Plan)</th>
-                                <th>Agent Achievement</th>
-                                <th>Branch Achievement</th>
-                                <th style={{ textAlign: 'right' }}>Total Combined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                                        {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : `👤 ${item.username}`)}
-                                    </td>
-                                    <td style={{ color: 'var(--text-muted)' }}>
-                                        {formatCurrency(item.plan || item.morning_plan || 0)}
-                                    </td>
-                                    <td style={{ color: '#059669', fontWeight: 600 }}>
-                                        {formatCurrency(item.agent_achievement || 0)}
-                                    </td>
-                                    <td style={{ color: '#0284c7', fontWeight: 600 }}>
-                                        {formatCurrency(item.bdo_branch_performance || 0)}
-                                    </td>
-                                    <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
-                                        {formatCurrency(item.total_business || item.actual_business || 0)}
-                                    </td>
-                                </tr>
-                            ))}
-                            {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No records found for this date.</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </>
-    )
-}
+                        {/* Data Table */}
+                        <div className="clean-card animate-fade-in">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 className="text-h2">Detailed Performance Breakdown</h3>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                    Showing {data.length} records for {filterDate}
+                                </div>
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="clean-table">
+                                    <thead>
+                                        <tr>
+                                            <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
+                                            <th>Target (Plan)</th>
+                                            <th>Agent Achievement</th>
+                                            <th>Branch Achievement</th>
+                                            <th style={{ textAlign: 'right' }}>Total Combined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                                                    {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : `👤 ${item.username}`)}
+                                                </td>
+                                                <td style={{ color: 'var(--text-muted)' }}>
+                                                    {formatCurrency(item.plan || item.morning_plan || 0)}
+                                                </td>
+                                                <td style={{ color: '#059669', fontWeight: 600 }}>
+                                                    {formatCurrency(item.agent_achievement || 0)}
+                                                </td>
+                                                <td style={{ color: '#0284c7', fontWeight: 600 }}>
+                                                    {formatCurrency(item.bdo_branch_performance || 0)}
+                                                </td>
+                                                <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
+                                                    {formatCurrency(item.total_business || item.actual_business || 0)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No records found for this date.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )
+                }
             </main >
         </div >
     );
