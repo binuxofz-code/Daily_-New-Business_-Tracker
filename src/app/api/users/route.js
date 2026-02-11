@@ -10,7 +10,7 @@ export async function GET(request) {
         // Fetch all members (and zonal managers if needed) to manage
         const { data: users, error } = await supabase
             .from('users')
-            .select('id, username, role, zone, branch')
+            .select('id, username, role, zone, branch, managed_locations')
             .order('username', { ascending: true });
 
         if (error) throw error;
@@ -23,13 +23,18 @@ export async function GET(request) {
 
 export async function PUT(request) {
     try {
-        const { id, zone, branch } = await request.json();
+        const { id, zone, branch, managed_locations } = await request.json();
 
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
+        const updates = {};
+        if (zone !== undefined) updates.zone = zone;
+        if (branch !== undefined) updates.branch = branch;
+        if (managed_locations !== undefined) updates.managed_locations = managed_locations;
+
         const { error } = await supabase
             .from('users')
-            .update({ zone, branch })
+            .update(updates)
             .eq('id', id);
 
         if (error) throw error;

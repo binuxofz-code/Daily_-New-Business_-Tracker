@@ -63,7 +63,11 @@ export default function AdminDashboard({ user, onLogout }) {
 
     const handleEditUser = (u) => {
         setEditingUser(u.id);
-        setEditForm({ zone: u.zone || '', branch: u.branch || '' });
+        setEditForm({
+            zone: u.zone || '',
+            branch: u.branch || '',
+            managed_locations: u.managed_locations || '[]'
+        });
     };
 
     const saveUser = async (id) => {
@@ -197,8 +201,8 @@ export default function AdminDashboard({ user, onLogout }) {
                                     <tr>
                                         <th>Username</th>
                                         <th>Role</th>
-                                        <th>Zone</th>
-                                        <th>Branch</th>
+                                        <th>Zone / Allocations</th>
+                                        <th>Detail / Branch</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -207,26 +211,71 @@ export default function AdminDashboard({ user, onLogout }) {
                                         <tr key={u.id}>
                                             <td style={{ fontWeight: 500 }}>{u.username}</td>
                                             <td style={{ opacity: 0.7 }}>{u.role}</td>
+
+                                            {/* Zone/Allocations Column */}
                                             <td>
                                                 {editingUser === u.id ? (
-                                                    <input
-                                                        className="glass-input"
-                                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
-                                                        value={editForm.zone}
-                                                        onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
-                                                    />
-                                                ) : u.zone || '-'}
+                                                    u.role === 'zonal_manager' ? (
+                                                        <div style={{ fontSize: '0.8rem' }}>
+                                                            <strong>Allocated Branches:</strong>
+                                                            <div style={{ maxHeight: '150px', overflowY: 'auto', margin: '0.5rem 0', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '4px' }}>
+                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations || '[]') : []).map((loc, idx) => (
+                                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                                                        <span>{loc.zone} - {loc.branch}</span>
+                                                                        <button type="button" onClick={() => {
+                                                                            const current = JSON.parse(editForm.managed_locations || '[]');
+                                                                            const newLocs = current.filter((_, i) => i !== idx);
+                                                                            setEditForm({ ...editForm, managed_locations: JSON.stringify(newLocs) });
+                                                                        }} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>×</button>
+                                                                    </div>
+                                                                ))}
+                                                                {(editForm.managed_locations ? JSON.parse(editForm.managed_locations || '[]') : []).length === 0 && <span style={{ opacity: 0.5 }}>No allocations</span>}
+                                                            </div>
+                                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                                                <input placeholder="Zone" id={`new-zone-${u.id}`} className="glass-input" style={{ width: '60px', padding: '2px', fontSize: '0.7rem' }} />
+                                                                <input placeholder="Branch" id={`new-branch-${u.id}`} className="glass-input" style={{ width: '60px', padding: '2px', fontSize: '0.7rem' }} />
+                                                                <button type="button" onClick={() => {
+                                                                    const z = document.getElementById(`new-zone-${u.id}`).value;
+                                                                    const b = document.getElementById(`new-branch-${u.id}`).value;
+                                                                    if (z && b) {
+                                                                        const current = JSON.parse(editForm.managed_locations || '[]');
+                                                                        current.push({ zone: z, branch: b });
+                                                                        setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
+                                                                        document.getElementById(`new-zone-${u.id}`).value = '';
+                                                                        document.getElementById(`new-branch-${u.id}`).value = '';
+                                                                    }
+                                                                }} style={{ fontSize: '0.7rem', background: '#6366f1', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', padding: '0 4px' }}>Add</button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            className="glass-input"
+                                                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
+                                                            value={editForm.zone}
+                                                            onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                                                        />
+                                                    )
+                                                ) : (
+                                                    u.role === 'zonal_manager' ? (
+                                                        <div style={{ fontSize: '0.8rem' }}>
+                                                            {(u.managed_locations ? JSON.parse(u.managed_locations) : []).length} Branches Allocated
+                                                        </div>
+                                                    ) : (u.zone || '-')
+                                                )}
                                             </td>
+
+                                            {/* Branch Column (Only for non-managers typically) */}
                                             <td>
-                                                {editingUser === u.id ? (
+                                                {editingUser === u.id && u.role !== 'zonal_manager' ? (
                                                     <input
                                                         className="glass-input"
                                                         style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}
                                                         value={editForm.branch}
                                                         onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
                                                     />
-                                                ) : u.branch || '-'}
+                                                ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
                                             </td>
+
                                             <td>
                                                 {editingUser === u.id ? (
                                                     <div style={{ display: 'flex', gap: '0.5rem' }}>

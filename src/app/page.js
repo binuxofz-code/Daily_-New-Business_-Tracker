@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import LoginForm from '@/components/LoginForm';
 import SignupForm from '@/components/SignupForm';
 import MemberDashboard from '@/components/MemberDashboard';
-import AdminDashboard from '@/components/AdminDashboard';
+import ZonalManagerDashboard from '@/components/ZonalManagerDashboard';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -38,8 +38,11 @@ export default function Home() {
 
   // Main Render Logic
   if (user) {
-    if (user.role === 'admin' || user.role === 'head' || user.role === 'zonal_manager') {
+    if (user.role === 'admin' || user.role === 'head') {
       return <AdminDashboard user={user} onLogout={handleLogout} />;
+    }
+    if (user.role === 'zonal_manager') {
+      return <ZonalManagerDashboard user={user} onLogout={handleLogout} />;
     }
     return <MemberDashboard user={user} onLogout={handleLogout} />;
   }

@@ -13,67 +13,67 @@ export async function GET(request) {
     if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
     try {
-        // Fetch users and their records for the date.
-        // Supabase JS doesn't do deep joins easily for aggregation without custom RPC or views.
-        // We will fetch raw data and aggregate in JS for simplicity, as dataset is likely small (<1000 users).
+        // v2 Logic: Aggregate based on RECORDS principally, since Zonal Managers enter multiple records.
+        // We fetch ALL records for the date.
 
-        // Fetch all members first
-        let userQuery = supabase.from('users').select('id, username, role, zone, branch').eq('role', 'member');
-        if (zone) userQuery = userQuery.eq('zone', zone);
+        let query = supabase.from('daily_records').select(`
+            *,
+            users (username, role, zone, branch)
+        `).eq('date', date);
 
-        const { data: users, error: userError } = await userQuery;
+        // Note: Filtering by zone here on the record level might be tricky if records don't have zone yet (migration).
+        // Best fetch all for date and filter in memory for now to handle mixed data.
 
-        if (userError) throw userError;
+        const { data: records, error } = await query;
+        if (error) throw error;
 
-        // Fetch records for these users for the date
-        const userIds = users.map(u => u.id);
-        let records = [];
-        if (userIds.length > 0) {
-            const { data: recs, error: recError } = await supabase
-                .from('daily_records')
-                .select('*')
-                .in('user_id', userIds)
-                .eq('date', date);
-
-            if (!recError) records = recs;
-        }
-
-        // Map records to users
-        const combined = users.map(u => {
-            const r = records.find(rec => rec.user_id === u.id);
+        // Improve Data Shape
+        // If record has direct zone/branch, use it. Else fall back to user's zone/branch.
+        const augmentedRecords = records.map(r => {
+            const u = r.users || {};
             return {
-                ...u,
-                morning_plan: r?.morning_plan || '',
-                actual_business: r?.actual_business || 0,
-                updated_at: r?.updated_at
+                ...r,
+                username: u.username,
+                // Prefer record's zone/branch (v2), fallback to user's (v1)
+                zone: r.zone || u.zone || 'Unknown',
+                branch: r.branch || u.branch || 'Unknown',
+                role: u.role
             };
         });
 
+        // If zone filter applied
+        const filtered = zone
+            ? augmentedRecords.filter(r => r.zone === zone)
+            : augmentedRecords;
+
         if (type === 'zone') {
-            // Aggregate by zone
             const groups = {};
-            combined.forEach(u => {
-                if (!u.zone) return;
-                if (!groups[u.zone]) groups[u.zone] = { zone: u.zone, agents: 0, total_business: 0 };
-                groups[u.zone].agents++;
-                groups[u.zone].total_business += (u.actual_business || 0);
+            filtered.forEach(r => {
+                const z = r.zone;
+                if (!groups[z]) groups[z] = { zone: z, agents: 0, total_business: 0 };
+                groups[z].agents++; // This is actually "records count" now, effectively branches reporting
+                groups[z].total_business += (r.actual_business || 0);
             });
             return NextResponse.json(Object.values(groups));
         }
 
         if (type === 'branch') {
             const groups = {};
-            combined.forEach(u => {
-                if (!u.branch) return;
-                if (!groups[u.branch]) groups[u.branch] = { branch: u.branch, agents: 0, total_business: 0 };
-                groups[u.branch].agents++;
-                groups[u.branch].total_business += (u.actual_business || 0);
+            filtered.forEach(r => {
+                const b = r.branch;
+                if (!groups[b]) groups[b] = { branch: b, agents: 0, total_business: 0 };
+                groups[b].agents++;
+                groups[b].total_business += (r.actual_business || 0);
             });
             return NextResponse.json(Object.values(groups));
         }
 
-        // Default list
-        return NextResponse.json(combined);
+        // Overview / List
+        // We also want to include "Missing" Agents if they haven't reported?
+        // For simplicity v2, we just show "Reported" data. 
+        // Showing missing agents is complex with Zonal Managers having n-branches.
+        // Let's stick to showing the records we have.
+        return NextResponse.json(filtered);
 
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
