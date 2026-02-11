@@ -1,7 +1,7 @@
 
 'use client';
 import { useState } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Shield } from 'lucide-react';
 
 export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
     const [formData, setFormData] = useState({
