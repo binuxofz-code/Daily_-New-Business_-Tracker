@@ -5,7 +5,7 @@ import { Sun, Moon, Shield } from 'lucide-react';
 
 export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
     const [formData, setFormData] = useState({
-        username: '', password: '', role: 'member', zone: '', branch: ''
+        username: '', password: '', role: 'zonal_manager', zone: '', branch: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -97,7 +97,7 @@ export default function SignupForm({ onSignup, onSwitch, theme, toggleTheme }) {
                     </div>
 
                     <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }} disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Register as Team Member'}
+                        {loading ? 'Creating Account...' : 'Register as Zonal Manager'}
                     </button>
                 </form>
 
