@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, BarChart2, Settings, LogOut, Shield, Sun, Moon, Download } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -126,6 +126,57 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(val);
+    };
+
+    const handleExportCSV = () => {
+        if (!data || data.length === 0) {
+            alert('No data available to export');
+            return;
+        }
+
+        const headers = tab === 'zone'
+            ? ['Zone', 'Target_Plan', 'Agent_Achievement', 'Branch_Achievement', 'Total_Combined']
+            : tab === 'branch'
+                ? ['Branch', 'Target_Plan', 'Agent_Achievement', 'Branch_Achievement', 'Total_Combined']
+                : ['Agent', 'Role', 'Zone', 'Branch', 'Target_Plan', 'Agent_Achievement', 'Branch_Achievement', 'Total_Combined'];
+
+        const rows = data.map(item => {
+            if (tab === 'overview') {
+                return [
+                    item.username,
+                    item.role,
+                    item.zone,
+                    item.branch,
+                    item.morning_plan || 0,
+                    item.agent_achievement || 0,
+                    item.bdo_branch_performance || 0,
+                    item.total_business || item.actual_business || 0
+                ];
+            } else {
+                return [
+                    tab === 'zone' ? item.zone : item.branch,
+                    item.plan || 0,
+                    item.agent_achievement || 0,
+                    item.bdo_branch_performance || 0,
+                    item.total_business || 0
+                ];
+            }
+        });
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Daily_Business_Report_${filterDate}_${tab}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // Chart Logic
@@ -442,8 +493,15 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                         <div className="clean-card animate-fade-in">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                 <h3 className="text-h2">Detailed Performance Breakdown</h3>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                    Showing {data.length} records for {filterDate}
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <span>Showing {data.length} records for {filterDate}</span>
+                                    <button
+                                        onClick={handleExportCSV}
+                                        className="btn-secondary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                                    >
+                                        <Download size={14} /> Export CSV
+                                    </button>
                                 </div>
                             </div>
                             <div className="table-container">
