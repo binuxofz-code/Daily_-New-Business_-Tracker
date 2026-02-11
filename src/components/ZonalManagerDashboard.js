@@ -68,36 +68,38 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
     const handleSave = async () => {
         setSaving(true);
         try {
-            const results = await Promise.all(locations.map(async (loc) => {
+            const payload = locations.map(loc => {
                 const key = `${loc.zone}-${loc.branch}`;
                 const recordData = records[key] || {};
 
-                const res = await fetch('/api/records', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        date,
-                        zone_plan: recordData.branch_plan || recordData.zone_plan || '',
-                        branch_plan: recordData.branch_plan || '',
-                        agent_achievement: parseFloat(recordData.agent_achievement) || 0,
-                        bdo_branch_performance: parseFloat(recordData.bdo_branch_performance) || 0,
-                        zone: loc.zone,
-                        branch: loc.branch
-                    })
-                });
-                return res.ok;
-            }));
+                return {
+                    user_id: user.id,
+                    date,
+                    zone_plan: recordData.branch_plan || recordData.zone_plan || '',
+                    branch_plan: recordData.branch_plan || '',
+                    agent_achievement: parseFloat(recordData.agent_achievement) || 0,
+                    bdo_branch_performance: parseFloat(recordData.bdo_branch_performance) || 0,
+                    zone: loc.zone,
+                    branch: loc.branch
+                };
+            });
 
-            if (results.every(r => r === true)) {
+            const res = await fetch('/api/records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
                 alert('All records saved successfully!');
             } else {
-                alert('Some records failed to save. Please check your connection.');
+                const errorData = await res.json();
+                alert(`Failed to save: ${errorData.error || 'Please check your connection.'}`);
             }
             fetchRecords();
         } catch (e) {
             console.error(e);
-            alert('Error saving records');
+            alert('Error saving records: ' + e.message);
         } finally {
             setSaving(false);
         }
