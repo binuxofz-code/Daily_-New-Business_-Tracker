@@ -1,8 +1,8 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Use Service Role Key on server for full access, Anon key on client
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 let supabase = null;
 
@@ -15,8 +15,12 @@ const isValidUrl = (url) => {
     }
 };
 
-if (isValidUrl(supabaseUrl) && supabaseAnonKey && !supabaseAnonKey.includes('your_supabase_anon_key_here')) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (isValidUrl(supabaseUrl) && supabaseKey && !supabaseKey.includes('your_supabase_anon_key_here')) {
+    supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+            persistSession: false // Since we handle auth manually, don't persist
+        }
+    });
 } else {
     console.warn('Supabase configuration missing or contains placeholders - Database is NOT connected.');
 }
