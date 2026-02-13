@@ -300,8 +300,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                     <tr>
                                         <th>Username</th>
                                         <th>Role</th>
-                                        <th>Allocations / Zone</th>
-                                        <th>Details / Branch</th>
+                                        <th>Allocated Zones / Location</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -435,17 +434,6 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                 )}
                                             </td>
 
-                                            {/* Branch */}
-                                            < td >
-                                                {editingUser === u.id && u.role !== 'zonal_manager' ? (
-                                                    <input
-                                                        className="clean-input"
-                                                        value={editForm.branch}
-                                                        onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                                                        placeholder="Branch"
-                                                    />
-                                                ) : u.role !== 'zonal_manager' ? (u.branch || '-') : '-'}
-                                            </td>
 
                                             <td>
                                                 {editingUser === u.id ? (
