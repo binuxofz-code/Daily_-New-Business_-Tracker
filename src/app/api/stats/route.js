@@ -1,50 +1,40 @@
-
 import { NextResponse } from 'next/server';
+import db from '@/lib/db';
+
 export const dynamic = 'force-dynamic';
-// import db from '@/lib/db';
-import supabase from '@/lib/supabase';
 
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const date = searchParams.get('date');
-    const zone = searchParams.get('zone');
+    const zoneQuery = searchParams.get('zone');
 
     if (!date) return NextResponse.json({ error: 'Date required' }, { status: 400 });
-    if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
 
     try {
-        // v2 Logic: Aggregate based on RECORDS principally, since Zonal Managers enter multiple records.
-        // We fetch ALL records for the date.
-
-        let query = supabase.from('daily_records').select(`
-            *,
-            users (username, role, zone, branch)
-        `).eq('date', date);
-
-        // Note: Filtering by zone here on the record level might be tricky if records don't have zone yet (migration).
-        // Best fetch all for date and filter in memory for now to handle mixed data.
-
-        const { data: records, error } = await query;
-        if (error) throw error;
+        const query = `
+            SELECT 
+                r.*,
+                u.username, u.role, u.zone as user_zone, u.branch as user_branch
+            FROM daily_records r
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.date = ?
+        `;
+        const records = db.prepare(query).all(date);
 
         // Improve Data Shape
-        // If record has direct zone/branch, use it. Else fall back to user's zone/branch.
-        const augmentedRecords = records.map(r => {
-            const u = r.users || {};
-            return {
-                ...r,
-                username: u.username,
-                // Prefer record's zone/branch (v2), fallback to user's (v1)
-                zone: r.zone || u.zone || 'Unknown',
-                branch: r.branch || u.branch || 'Unknown',
-                role: u.role
-            };
-        });
+        const augmentedRecords = records.map(r => ({
+            ...r,
+            // Prefer record's zone/branch, fallback to user's
+            zone: r.zone || r.user_zone || 'Unknown',
+            branch: r.branch || r.user_branch || 'Unknown',
+            role: r.role
+        }));
 
-        // If zone filter applied
-        const filtered = zone
-            ? augmentedRecords.filter(r => r.zone === zone)
+        // Filter
+        const filtered = zoneQuery
+            ? augmentedRecords.filter(r => r.zone === zoneQuery)
             : augmentedRecords;
 
         if (type === 'zone') {
@@ -53,10 +43,13 @@ export async function GET(request) {
                 const z = r.zone;
                 if (!groups[z]) groups[z] = { zone: z, branches: 0, plan: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
                 groups[z].branches++;
-                groups[z].plan += (parseFloat(r.branch_plan) || 0);
+                // Use zone_plan if typically one record per zone per day in new system, else sum branch_plans
+                // In new simplification, we have ONE record per zone with zone_plan.
+                // So summing needs care if there are duplicate records. Assuming one record per zone-branch or zone.
+                groups[z].plan += (parseFloat(r.zone_plan) || parseFloat(r.branch_plan) || 0);
                 groups[z].agent_achievement += (parseFloat(r.agent_achievement) || 0);
                 groups[z].bdo_branch_performance += (parseFloat(r.bdo_branch_performance) || 0);
-                groups[z].total_business += (parseFloat(r.agent_achievement) || 0) + (parseFloat(r.bdo_branch_performance) || 0);
+                groups[z].total_business += (parseFloat(r.total_business) || parseFloat(r.actual_business) || 0);
             });
             return NextResponse.json(Object.values(groups));
         }
@@ -69,19 +62,15 @@ export async function GET(request) {
                 groups[b].plan += (parseFloat(r.branch_plan) || 0);
                 groups[b].agent_achievement += (parseFloat(r.agent_achievement) || 0);
                 groups[b].bdo_branch_performance += (parseFloat(r.bdo_branch_performance) || 0);
-                groups[b].total_business += (parseFloat(r.agent_achievement) || 0) + (parseFloat(r.bdo_branch_performance) || 0);
+                groups[b].total_business += (parseFloat(r.total_business) || parseFloat(r.actual_business) || 0);
             });
             return NextResponse.json(Object.values(groups));
         }
 
-        // Overview / List
-        // We also want to include "Missing" Agents if they haven't reported?
-        // For simplicity v2, we just show "Reported" data. 
-        // Showing missing agents is complex with Zonal Managers having n-branches.
-        // Let's stick to showing the records we have.
         return NextResponse.json(filtered);
 
-    } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (e) {
+        console.error(e);
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

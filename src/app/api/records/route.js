@@ -1,85 +1,90 @@
-
 import { NextResponse } from 'next/server';
+import db from '@/lib/db';
+
 export const dynamic = 'force-dynamic';
-// import db from '@/lib/db';
-import supabase from '@/lib/supabase';
 
 export async function POST(request) {
     try {
         const body = await request.json();
         const records = Array.isArray(body) ? body : [body];
 
-        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
 
-        const results = await Promise.all(records.map(async (rec) => {
-            const { user_id, date, zone_plan, branch_plan, morning_plan, aaf_agents, agent_achievement, bdo_branch_performance, actual_business, zone, branch } = rec;
+        const processRecords = db.transaction((recs) => {
+            let count = 0;
+            for (const rec of recs) {
+                const { user_id, date, zone_plan, branch_plan, morning_plan, aaf_agents, agent_achievement, bdo_branch_performance, actual_business, zone, branch } = rec;
 
-            // Get user role for uniqueness logic
-            const { data: userData } = await supabase.from('users').select('role').eq('id', user_id).single();
-            const role = userData?.role || 'member';
+                // Get user role for uniqueness logic
+                const user = db.prepare('SELECT role FROM users WHERE id = ?').get(user_id);
+                const role = user ? user.role : 'member';
 
-            // Check existing record for this user + date
-            let query = supabase
-                .from('daily_records')
-                .select('*')
-                .eq('user_id', user_id)
-                .eq('date', date);
+                // Check existing record
+                let checkQuery = 'SELECT * FROM daily_records WHERE user_id = ? AND date = ?';
+                let checkParams = [user_id, date];
 
-            // Zonal managers save one record PER branch
-            if (role === 'zonal_manager' && branch) {
-                query = query.eq('branch', branch);
+                if (role === 'zonal_manager' && branch) {
+                    checkQuery += ' AND branch = ?';
+                    checkParams.push(branch);
+                } else if (role === 'zonal_manager' && !branch) {
+                    // Fallback for old data or if branch is missing but should be unique
+                    checkQuery += ' AND (branch IS NULL OR branch = "")';
+                }
+
+                const check = db.prepare(checkQuery).get(...checkParams);
+
+                const finalAgentAch = agent_achievement !== undefined ? parseFloat(agent_achievement) : (actual_business !== undefined ? parseFloat(actual_business) : 0);
+                const finalBranchPerf = bdo_branch_performance !== undefined ? parseFloat(bdo_branch_performance) : 0;
+                const total_business_val = finalAgentAch + finalBranchPerf;
+                const finalMorningPlan = morning_plan !== undefined ? morning_plan : (zone_plan || branch_plan || '');
+
+                if (check) {
+                    // Update
+                    const updates = [];
+                    const params = [];
+
+                    if (zone_plan !== undefined) { updates.push('zone_plan = ?'); params.push(zone_plan); }
+                    if (branch_plan !== undefined) { updates.push('branch_plan = ?'); params.push(branch_plan); }
+                    if (morning_plan !== undefined) { updates.push('morning_plan = ?'); params.push(morning_plan); }
+                    // if (aaf_agents !== undefined) { updates.push('aaf_agents = ?'); params.push(aaf_agents); } // checking if column exists in schema
+                    if (agent_achievement !== undefined || actual_business !== undefined) { updates.push('agent_achievement = ?'); params.push(finalAgentAch); }
+                    if (bdo_branch_performance !== undefined) { updates.push('bdo_branch_performance = ?'); params.push(finalBranchPerf); }
+                    if (actual_business !== undefined) { updates.push('actual_business = ?'); params.push(actual_business); }
+
+                    updates.push('total_business = ?'); params.push(total_business_val);
+                    if (zone) { updates.push('zone = ?'); params.push(zone); }
+                    if (branch) { updates.push('branch = ?'); params.push(branch); }
+
+                    updates.push('updated_at = ?'); params.push(new Date().toISOString());
+
+                    params.push(check.id);
+
+                    if (updates.length > 0) {
+                        db.prepare(`UPDATE daily_records SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+                    }
+                } else {
+                    // Insert
+                    db.prepare(`
+                        INSERT INTO daily_records (
+                            user_id, date, zone_plan, branch_plan, morning_plan, 
+                            agent_achievement, bdo_branch_performance, total_business, 
+                            actual_business, zone, branch
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `).run(
+                        user_id, date,
+                        zone_plan || 0, branch_plan || 0, finalMorningPlan || '',
+                        finalAgentAch, finalBranchPerf, total_business_val,
+                        actual_business || 0, zone || '', branch || ''
+                    );
+                }
+                count++;
             }
+            return count;
+        });
 
-            const { data: checks } = await query;
-            const check = checks && checks.length > 0 ? checks[0] : null;
+        const count = processRecords(records);
 
-            const finalAgentAch = agent_achievement !== undefined ? parseFloat(agent_achievement) : (actual_business !== undefined ? parseFloat(actual_business) : 0);
-            const finalBranchPerf = bdo_branch_performance !== undefined ? parseFloat(bdo_branch_performance) : 0;
-            const total_business_val = finalAgentAch + finalBranchPerf;
-            const finalMorningPlan = morning_plan !== undefined ? morning_plan : (zone_plan || branch_plan || '');
-
-            if (check) {
-                // Update
-                const updates = {};
-                if (zone_plan !== undefined) updates.zone_plan = zone_plan;
-                if (branch_plan !== undefined) updates.branch_plan = branch_plan;
-                if (morning_plan !== undefined) updates.morning_plan = morning_plan;
-                if (aaf_agents !== undefined) updates.aaf_agents = aaf_agents;
-                if (agent_achievement !== undefined || actual_business !== undefined) updates.agent_achievement = finalAgentAch;
-                if (bdo_branch_performance !== undefined) updates.bdo_branch_performance = finalBranchPerf;
-                if (actual_business !== undefined) updates.actual_business = actual_business;
-                updates.total_business = total_business_val;
-                if (zone) updates.zone = zone;
-                if (branch) updates.branch = branch;
-                updates.updated_at = new Date().toISOString();
-
-                const { error } = await supabase
-                    .from('daily_records')
-                    .update(updates)
-                    .eq('id', check.id);
-
-                if (error) throw error;
-            } else {
-                // Insert
-                const { error } = await supabase.from('daily_records').insert({
-                    user_id, date,
-                    zone_plan: zone_plan || '',
-                    branch_plan: branch_plan || '',
-                    morning_plan: finalMorningPlan,
-                    aaf_agents: aaf_agents || 0,
-                    agent_achievement: finalAgentAch,
-                    bdo_branch_performance: finalBranchPerf,
-                    total_business: total_business_val,
-                    actual_business: actual_business || 0,
-                    zone: zone || '',
-                    branch: branch || ''
-                });
-                if (error) throw error;
-            }
-            return true;
-        }));
-
-        return NextResponse.json({ success: true, count: results.length });
+        return NextResponse.json({ success: true, count });
     } catch (error) {
         console.error('API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -91,28 +96,23 @@ export async function GET(request) {
     const userId = searchParams.get('userId');
     const date = searchParams.get('date');
 
-    if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
 
-    if (userId && date) {
-        const { data: record } = await supabase
-            .from('daily_records')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('date', date);
-        return NextResponse.json(record || []);
+    try {
+        if (userId && date) {
+            const records = db.prepare('SELECT * FROM daily_records WHERE user_id = ? AND date = ?').all(userId, date);
+            return NextResponse.json(records || []);
+        }
+
+        if (userId) {
+            const records = db.prepare('SELECT * FROM daily_records WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(userId);
+            return NextResponse.json(records || []);
+        }
+
+        return NextResponse.json([]);
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
-
-    if (userId) {
-        const { data: records } = await supabase
-            .from('daily_records')
-            .select('*')
-            .eq('user_id', userId)
-            .order('date', { ascending: false })
-            .limit(30);
-        return NextResponse.json(records || []);
-    }
-
-    return NextResponse.json([]);
 }
 
 export async function DELETE(request) {
@@ -121,14 +121,11 @@ export async function DELETE(request) {
         const id = searchParams.get('id');
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
 
-        const { error } = await supabase
-            .from('daily_records')
-            .delete()
-            .eq('id', id);
+        const info = db.prepare('DELETE FROM daily_records WHERE id = ?').run(id);
 
-        if (error) throw error;
+        if (info.changes === 0) return NextResponse.json({ error: 'Record not found' }, { status: 404 });
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -1,41 +1,33 @@
-
 import { NextResponse } from 'next/server';
-export const dynamic = 'force-dynamic';
-// import db from '@/lib/db'; // Legacy SQLite
-import supabase from '@/lib/supabase';
+import db from '@/lib/db';
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
     try {
         const { username, password, role, zone, branch } = await request.json();
 
-        // Check if supabase configured
-        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+        if (!username || !password) return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Check existing user via Supabase
-        const { data: existing } = await supabase
-            .from('users')
-            .select('username')
-            .eq('username', username)
-            .single();
+        try {
+            const result = db.prepare(`
+                INSERT INTO users (username, password, role, zone, branch)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(username, hashedPassword, role || 'member', zone || '', branch || '');
 
-        if (existing) {
-            return NextResponse.json({ error: 'Username already exists' }, { status: 400 });
+            return NextResponse.json({ success: true, id: result.lastInsertRowid });
+        } catch (e) {
+            // Check for unique constraint violation (username)
+            if (e.code === 'SQLITE_CONSTRAINT_UNIQUE' || e.message.includes('UNIQUE constraint failed')) {
+                return NextResponse.json({ error: 'Username already exists' }, { status: 400 });
+            }
+            throw e;
         }
 
-        const { data, error } = await supabase.from('users').insert({
-            username,
-            password: hashedPassword,
-            role: role || 'member',
-            zone: zone || '',
-            branch: branch || ''
-        }).select().single();
-
-        if (error) throw new Error(error.message);
-
-        return NextResponse.json({ success: true, id: data.id });
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
