@@ -22,7 +22,19 @@ export async function POST(request) {
         if (!valid) return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
 
         const { password: _, ...userWithoutPassword } = user;
-        return NextResponse.json({ user: userWithoutPassword });
+
+        const response = NextResponse.json({ user: userWithoutPassword });
+
+        // Set secure session cookie
+        response.cookies.set('user_session', JSON.stringify(userWithoutPassword), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: '/'
+        });
+
+        return response;
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

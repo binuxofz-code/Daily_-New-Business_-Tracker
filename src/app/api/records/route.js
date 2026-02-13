@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import { requireAuth } from '@/middleware/auth';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request) {
+const recordSchema = z.object({
+    user_id: z.string(),
+    date: z.string(),
+    zone_plan: z.union([z.string(), z.number()]).optional(),
+    branch_plan: z.union([z.string(), z.number()]).optional(),
+    morning_plan: z.union([z.string(), z.number()]).optional(),
+    agent_achievement: z.union([z.string(), z.number()]).optional(),
+    bdo_branch_performance: z.union([z.string(), z.number()]).optional(),
+    actual_business: z.union([z.string(), z.number()]).optional(),
+    zone: z.string().optional(),
+    branch: z.string().optional()
+});
+
+export const POST = requireAuth(async function (request) {
     try {
         const body = await request.json();
         const records = Array.isArray(body) ? body : [body];
@@ -11,7 +26,12 @@ export async function POST(request) {
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
         const results = await Promise.all(records.map(async (rec) => {
-            const { user_id, date, zone_plan, branch_plan, morning_plan, aaf_agents, agent_achievement, bdo_branch_performance, actual_business, zone, branch } = rec;
+            // Validate input
+            const result = recordSchema.safeParse(rec);
+            if (!result.success) throw new Error(result.error.errors[0].message);
+
+            const data = result.data;
+            const { user_id, date, zone, branch } = data;
 
             // Get user role for uniqueness logic
             const { data: userData } = await supabase.from('users').select('role').eq('id', user_id).single();
@@ -24,7 +44,6 @@ export async function POST(request) {
                 .eq('user_id', user_id)
                 .eq('date', date);
 
-            // Zonal managers save one record PER branch
             if (role === 'zonal_manager' && branch) {
                 query = query.eq('branch', branch);
             }
@@ -32,44 +51,36 @@ export async function POST(request) {
             const { data: checks } = await query;
             const check = checks && checks.length > 0 ? checks[0] : null;
 
-            const finalAgentAch = agent_achievement !== undefined ? parseFloat(agent_achievement) : (actual_business !== undefined ? parseFloat(actual_business) : 0);
-            const finalBranchPerf = bdo_branch_performance !== undefined ? parseFloat(bdo_branch_performance) : 0;
+            const finalAgentAch = data.agent_achievement !== undefined ? parseFloat(data.agent_achievement) : (data.actual_business !== undefined ? parseFloat(data.actual_business) : 0);
+            const finalBranchPerf = data.bdo_branch_performance !== undefined ? parseFloat(data.bdo_branch_performance) : 0;
             const total_business_val = finalAgentAch + finalBranchPerf;
-            const finalMorningPlan = morning_plan !== undefined ? morning_plan : (zone_plan || branch_plan || '');
+            const finalMorningPlan = data.morning_plan !== undefined ? data.morning_plan.toString() : (data.zone_plan || data.branch_plan || '').toString();
 
             if (check) {
-                // Update
                 const updates = {};
-                if (zone_plan !== undefined) updates.zone_plan = zone_plan;
-                if (branch_plan !== undefined) updates.branch_plan = branch_plan;
-                if (morning_plan !== undefined) updates.morning_plan = morning_plan;
-                // if (aaf_agents !== undefined) updates.aaf_agents = aaf_agents;
-                if (agent_achievement !== undefined || actual_business !== undefined) updates.agent_achievement = finalAgentAch;
-                if (bdo_branch_performance !== undefined) updates.bdo_branch_performance = finalBranchPerf;
-                if (actual_business !== undefined) updates.actual_business = actual_business;
+                if (data.zone_plan !== undefined) updates.zone_plan = data.zone_plan.toString();
+                if (data.branch_plan !== undefined) updates.branch_plan = data.branch_plan.toString();
+                if (data.morning_plan !== undefined) updates.morning_plan = data.morning_plan.toString();
+                if (data.agent_achievement !== undefined || data.actual_business !== undefined) updates.agent_achievement = finalAgentAch;
+                if (data.bdo_branch_performance !== undefined) updates.bdo_branch_performance = finalBranchPerf;
+                if (data.actual_business !== undefined) updates.actual_business = parseFloat(data.actual_business);
                 updates.total_business = total_business_val;
                 if (zone) updates.zone = zone;
                 if (branch) updates.branch = branch;
                 updates.updated_at = new Date().toISOString();
 
-                const { error } = await supabase
-                    .from('daily_records')
-                    .update(updates)
-                    .eq('id', check.id);
-
+                const { error } = await supabase.from('daily_records').update(updates).eq('id', check.id);
                 if (error) throw error;
             } else {
-                // Insert
                 const { error } = await supabase.from('daily_records').insert({
                     user_id, date,
-                    zone_plan: zone_plan || '',
-                    branch_plan: branch_plan || '',
+                    zone_plan: data.zone_plan?.toString() || '',
+                    branch_plan: data.branch_plan?.toString() || '',
                     morning_plan: finalMorningPlan,
-                    aaf_agents: aaf_agents || 0,
                     agent_achievement: finalAgentAch,
                     bdo_branch_performance: finalBranchPerf,
                     total_business: total_business_val,
-                    actual_business: actual_business || 0,
+                    actual_business: parseFloat(data.actual_business || 0),
                     zone: zone || '',
                     branch: branch || ''
                 });
@@ -83,9 +94,9 @@ export async function POST(request) {
         console.error('API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
-}
+});
 
-export async function GET(request) {
+export const GET = requireAuth(async function (request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const date = searchParams.get('date');
@@ -116,9 +127,9 @@ export async function GET(request) {
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
-}
+});
 
-export async function DELETE(request) {
+export const DELETE = requireAuth(async function (request) {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
@@ -126,15 +137,11 @@ export async function DELETE(request) {
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
         if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
-        const { error } = await supabase
-            .from('daily_records')
-            .delete()
-            .eq('id', id);
-
+        const { error } = await supabase.from('daily_records').delete().eq('id', id);
         if (error) throw error;
 
         return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
-}
+});

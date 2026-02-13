@@ -49,7 +49,12 @@ export default function Home() {
     localStorage.setItem('tracker_user', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout API failed:', e);
+    }
     setUser(null);
     localStorage.removeItem('tracker_user');
     setView('login');

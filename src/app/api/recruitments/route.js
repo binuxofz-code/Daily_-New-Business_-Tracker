@@ -4,66 +4,37 @@
  * This shows how to use the authentication middleware to protect your API routes.
  * You can apply this pattern to all sensitive API routes.
  */
-
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
-// Uncomment to enable authentication:
-// import { requireAuth, requireRole, rateLimit } from '@/middleware/auth';
+import { requireAuth } from '@/middleware/auth';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-// EXAMPLE 1: Basic Authentication
-// Wrap your handler with requireAuth to ensure user is logged in
-/*
-export const GET = requireAuth(async function(request) {
-    // request.user is now available with user data
-    const userId = request.user.id;
-    
-    // Your logic here...
+// Validation Schemas
+const recruitSchema = z.object({
+    recruit_name: z.string().min(1, 'Name is required').max(100),
+    contact_no: z.string().max(20).optional().nullable(),
+    nic: z.string().max(20).optional().nullable(),
+    notes: z.string().max(500).optional().nullable(),
+    user_id: z.string().optional() // Usually taken from auth, but kept for compatibility
 });
-*/
 
-// EXAMPLE 2: Role-Based Access Control
-// Only allow admin and zonal_manager to access
-/*
-export const GET = requireRole(['admin', 'zonal_manager'])(async function(request) {
-    // Only admins and zonal managers can reach here
-    const userRole = request.user.role;
-    
-    // Your logic here...
+const updateSchema = z.object({
+    id: z.union([z.string(), z.number()]),
+    recruit_name: z.string().min(1).max(100).optional(),
+    contact_no: z.string().max(20).optional().nullable(),
+    nic: z.string().max(20).optional().nullable(),
+    notes: z.string().max(500).optional().nullable(),
+    date_file_submitted: z.string().optional().nullable(),
+    date_exam_passed: z.string().optional().nullable(),
+    date_documents_complete: z.string().optional().nullable(),
+    date_appointed: z.string().optional().nullable(),
+    date_code_issued: z.string().optional().nullable()
 });
-*/
 
-// EXAMPLE 3: Rate Limiting
-// Limit to 100 requests per 15 minutes
-/*
-export const GET = rateLimit(100, 15 * 60 * 1000)(async function(request) {
-    // Rate limited endpoint
-    
-    // Your logic here...
-});
-*/
-
-// EXAMPLE 4: Combine Multiple Protections
-/*
-export const POST = rateLimit(50, 15 * 60 * 1000)(
-    requireRole(['admin', 'zonal_manager'])(
-        async function(request) {
-            // This endpoint is:
-            // 1. Rate limited (50 requests per 15 min)
-            // 2. Requires authentication
-            // 3. Requires admin or zonal_manager role
-            
-            // Your logic here...
-        }
-    )
-);
-*/
-
-// Current implementation (UNPROTECTED - for backward compatibility)
-// To enable protection, uncomment the middleware imports and wrap handlers
-
-export async function GET(request) {
+// GET - List recruits (Authenticated)
+export const GET = requireAuth(async function (request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const zone = searchParams.get('zone');
@@ -76,6 +47,7 @@ export async function GET(request) {
         users!inner (username, role, zone, branch)
     `).order('created_at', { ascending: false });
 
+    // If filtering by specific user, or restricted based on role (could add more logic here)
     if (userId) {
         query = query.eq('user_id', userId);
     } else {
@@ -87,16 +59,24 @@ export async function GET(request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json(data);
-}
+});
 
-export async function POST(request) {
+// POST - Create recruit (Authenticated)
+export const POST = requireAuth(async function (request) {
     try {
         const body = await request.json();
-        const { user_id, recruit_name, nic, contact_no, notes } = body;
 
-        if (!user_id || !recruit_name) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Validate input
+        const result = recruitSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
         }
+
+        const { recruit_name, nic, contact_no, notes } = result.data;
+        // Use user_id from auth token if available, otherwise from body
+        const user_id = request.user?.id || body.user_id;
+
+        if (!user_id) return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
 
         const { data, error } = await supabase.from('recruitments').insert({
             user_id,
@@ -112,14 +92,20 @@ export async function POST(request) {
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
-}
+});
 
-export async function PUT(request) {
+// PUT - Update recruit stages (Authenticated)
+export const PUT = requireAuth(async function (request) {
     try {
         const body = await request.json();
-        const { id, ...updates } = body;
 
-        if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
+        // Validate input
+        const result = updateSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
+        }
+
+        const { id, ...updates } = result.data;
 
         const { data, error } = await supabase
             .from('recruitments')
@@ -133,9 +119,10 @@ export async function PUT(request) {
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
-}
+});
 
-export async function DELETE(request) {
+// DELETE - Remove recruit (Authenticated)
+export const DELETE = requireAuth(async function (request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -145,4 +132,4 @@ export async function DELETE(request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json({ success: true });
-}
+});

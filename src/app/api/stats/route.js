@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import { requireAuth } from '@/middleware/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
+export const GET = requireAuth(async function (request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const date = searchParams.get('date');
@@ -71,4 +72,4 @@ export async function GET(request) {
         console.error(e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
-}
+});
