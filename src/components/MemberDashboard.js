@@ -12,17 +12,35 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         return localTime.toISOString().split('T')[0];
     };
 
+
     const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
     const [date, setDate] = useState(getSLDate());
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [history, setHistory] = useState([]);
+    const [monthlyTarget, setMonthlyTarget] = useState(null);
 
     useEffect(() => {
         fetchRecord();
+        fetchMonthlyTarget();
         if (activeTab === 'history') fetchHistory();
     }, [date, activeTab]);
+
+    const fetchMonthlyTarget = async () => {
+        try {
+            const month = date.slice(0, 7);
+            const res = await fetch(`/api/targets?username=${user.username}&month=${month}`);
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                setMonthlyTarget(data[0]);
+            } else {
+                setMonthlyTarget(null);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const fetchRecord = async () => {
         setLoading(true);
@@ -134,6 +152,39 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             </header>
 
             <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
+                {/* Monthly Goals Section */}
+                <div className="clean-card" style={{ marginBottom: '2rem', padding: '1.5rem', borderLeft: '4px solid #8b5cf6' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>Monthly Goals ({date.slice(0, 7)})</h3>
+                    </div>
+                    {monthlyTarget ? (
+                        <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+                            <div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>New Business Target</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{formatCurrency(monthlyTarget.new_business_target || 0)}</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Renewal Target</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{formatCurrency(monthlyTarget.renewal_target || 0)}</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Renewal Collected</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>{formatCurrency(monthlyTarget.renewal_collected || 0)}</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Pending Renewal</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f59e0b' }}>
+                                    {formatCurrency(Math.max(0, (monthlyTarget.renewal_target || 0) - (monthlyTarget.renewal_collected || 0)))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                            No monthly targets set for this month.
+                        </div>
+                    )}
+                </div>
+
                 {/* Daily Performance KPI */}
                 <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                     <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
