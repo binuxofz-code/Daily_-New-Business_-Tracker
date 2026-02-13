@@ -346,30 +346,59 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                         <th style={{ textAlign: 'center' }}>Exam Passed</th>
                                         <th style={{ textAlign: 'center' }}>Docs Complete</th>
                                         <th style={{ textAlign: 'center' }}>Appointed</th>
+                                        <th style={{ textAlign: 'center' }}>Code Issued</th>
+                                        <th style={{ textAlign: 'center' }}>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {recruits.map(r => (
-                                        <tr key={r.id}>
-                                            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                                                {r.recruit_name}
-                                                {r.contact_no && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>{r.contact_no}</div>}
-                                            </td>
-                                            <td>
-                                                {r.users?.username || '-'}
-                                            </td>
-                                            <td>
-                                                <span style={{ fontSize: '0.75rem', background: 'var(--bg-input)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                    {r.users?.zone} / {r.users?.branch}
-                                                </span>
-                                            </td>
-                                            <td style={{ textAlign: 'center' }}>{r.status_file_submitted ? <CheckCircle size={18} color="#10b981" style={{ margin: '0 auto' }} /> : <div style={{ width: '8px', height: '8px', background: 'var(--border)', borderRadius: '50%', margin: '0 auto', opacity: 0.5 }} />}</td>
-                                            <td style={{ textAlign: 'center' }}>{r.status_exam_passed ? <CheckCircle size={18} color="#10b981" style={{ margin: '0 auto' }} /> : <div style={{ width: '8px', height: '8px', background: 'var(--border)', borderRadius: '50%', margin: '0 auto', opacity: 0.5 }} />}</td>
-                                            <td style={{ textAlign: 'center' }}>{r.status_documents_complete ? <CheckCircle size={18} color="#10b981" style={{ margin: '0 auto' }} /> : <div style={{ width: '8px', height: '8px', background: 'var(--border)', borderRadius: '50%', margin: '0 auto', opacity: 0.5 }} />}</td>
-                                            <td style={{ textAlign: 'center' }}>{r.status_appointed ? <CheckCircle size={18} color="#3b82f6" style={{ margin: '0 auto' }} /> : <div style={{ width: '8px', height: '8px', background: 'var(--border)', borderRadius: '50%', margin: '0 auto', opacity: 0.5 }} />}</td>
-                                        </tr>
-                                    ))}
-                                    {recruits.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No recruitment records found.</td></tr>}
+                                    {recruits.map(r => {
+                                        const isComplete = r.date_file_submitted && r.date_exam_passed && r.date_documents_complete && r.date_appointed && r.date_code_issued;
+                                        return (
+                                            <tr key={r.id}>
+                                                <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                                                    {r.recruit_name}
+                                                    {r.contact_no && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>{r.contact_no}</div>}
+                                                </td>
+                                                <td>
+                                                    {r.users?.username || '-'}
+                                                </td>
+                                                <td>
+                                                    <span style={{ fontSize: '0.75rem', background: 'var(--bg-input)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                                                        {r.users?.zone} / {r.users?.branch}
+                                                    </span>
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '0.75rem', color: r.date_file_submitted ? '#3b82f6' : 'var(--text-muted)', fontWeight: r.date_file_submitted ? 600 : 400 }}>
+                                                    {r.date_file_submitted || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '0.75rem', color: r.date_exam_passed ? '#8b5cf6' : 'var(--text-muted)', fontWeight: r.date_exam_passed ? 600 : 400 }}>
+                                                    {r.date_exam_passed || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '0.75rem', color: r.date_documents_complete ? '#f59e0b' : 'var(--text-muted)', fontWeight: r.date_documents_complete ? 600 : 400 }}>
+                                                    {r.date_documents_complete || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '0.75rem', color: r.date_appointed ? '#10b981' : 'var(--text-muted)', fontWeight: r.date_appointed ? 600 : 400 }}>
+                                                    {r.date_appointed || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '0.75rem', color: r.date_code_issued ? '#059669' : 'var(--text-muted)', fontWeight: r.date_code_issued ? 600 : 400 }}>
+                                                    {r.date_code_issued || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <span style={{
+                                                        fontSize: '0.7rem',
+                                                        padding: '0.25rem 0.6rem',
+                                                        borderRadius: '12px',
+                                                        background: isComplete ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                        color: isComplete ? '#10b981' : '#ef4444',
+                                                        fontWeight: 700,
+                                                        border: isComplete ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                                                    }}>
+                                                        {isComplete ? 'COMPLETED' : 'PENDING'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                    {recruits.length === 0 && <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No recruitment records found.</td></tr>}
                                 </tbody>
                             </table>
                         </div>

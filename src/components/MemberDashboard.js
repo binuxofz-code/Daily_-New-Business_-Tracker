@@ -382,10 +382,11 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                                         {/* Status Checklist */}
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '0.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: '8px' }}>
                                             {[
-                                                { key: 'status_file_submitted', label: 'File Submitted' },
-                                                { key: 'status_exam_passed', label: 'Exam Passed' },
-                                                { key: 'status_documents_complete', label: 'Docs Complete' },
-                                                { key: 'status_appointed', label: 'Appointed' }
+                                                { key: 'date_file_submitted', label: 'File Submitted', color: '#3b82f6' },
+                                                { key: 'date_exam_passed', label: 'Exam Passed', color: '#8b5cf6' },
+                                                { key: 'date_documents_complete', label: 'Docs Complete', color: '#f59e0b' },
+                                                { key: 'date_appointed', label: 'Appointed', color: '#10b981' },
+                                                { key: 'date_code_issued', label: 'Code Issued', color: '#059669' }
                                             ].map(stage => (
                                                 <label key={stage.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                                     <div
