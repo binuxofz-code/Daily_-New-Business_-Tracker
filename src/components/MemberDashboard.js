@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { Sun, Moon, BarChart2, Save, LogOut, Calendar, User } from 'lucide-react';
+import { Sun, Moon, BarChart2, Save, LogOut, Calendar, User, UserPlus, CheckSquare, Trash2, Phone } from 'lucide-react';
 
 export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) {
     // Get current date in SL timezone (YYYY-MM-DD)
@@ -12,43 +12,29 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         return localTime.toISOString().split('T')[0];
     };
 
-
-    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
+    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history, recruitment
     const [date, setDate] = useState(getSLDate());
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [history, setHistory] = useState([]);
-    const [monthlyTarget, setMonthlyTarget] = useState(null);
+
+    // Recruitment State
+    const [recruits, setRecruits] = useState([]);
+    const [newRecruit, setNewRecruit] = useState({ recruit_name: '', nic: '', contact_no: '' });
+    const [addingRecruit, setAddingRecruit] = useState(false);
 
     useEffect(() => {
         fetchRecord();
-        fetchMonthlyTarget();
         if (activeTab === 'history') fetchHistory();
+        if (activeTab === 'recruitment') fetchRecruits();
     }, [date, activeTab]);
-
-    const fetchMonthlyTarget = async () => {
-        try {
-            const month = date.slice(0, 7);
-            const res = await fetch(`/api/targets?username=${user.username}&month=${month}`);
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-                setMonthlyTarget(data[0]);
-            } else {
-                setMonthlyTarget(null);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
 
     const fetchRecord = async () => {
         setLoading(true);
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
-
-            // API now returns an array for flexibility
             const activeRecord = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
             if (activeRecord) {
@@ -68,6 +54,16 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             const res = await fetch(`/api/records?userId=${user.id}`);
             const data = await res.json();
             setHistory(Array.isArray(data) ? data : []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const fetchRecruits = async () => {
+        try {
+            const res = await fetch(`/api/recruitments?userId=${user.id}`);
+            const data = await res.json();
+            setRecruits(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error(e);
         }
@@ -94,16 +90,74 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                 })
             });
             if (res.ok) {
-                // Refresh local state immediately
                 await fetchRecord();
-                alert('Success: Your record has been saved and is now visible.');
+                alert('Success: Your record has been saved.');
             } else {
-                alert('Failed to save. Please try again.');
+                alert('Failed to save.');
             }
         } catch (e) {
             alert('Error saving record.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleAddRecruit = async (e) => {
+        e.preventDefault();
+        if (!newRecruit.recruit_name) return alert('Name is required');
+
+        setAddingRecruit(true);
+        try {
+            const res = await fetch('/api/recruitments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    ...newRecruit
+                })
+            });
+
+            if (res.ok) {
+                setNewRecruit({ recruit_name: '', nic: '', contact_no: '' });
+                fetchRecruits();
+                alert('Recruit added successfully!');
+            } else {
+                alert('Failed to add recruit');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error adding recruit');
+        } finally {
+            setAddingRecruit(false);
+        }
+    };
+
+    const toggleRecruitStatus = async (id, field, currentValue) => {
+        // Optimistic update
+        const updatedRecruits = recruits.map(r =>
+            r.id === id ? { ...r, [field]: !currentValue } : r
+        );
+        setRecruits(updatedRecruits);
+
+        try {
+            await fetch('/api/recruitments', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, [field]: !currentValue })
+            });
+        } catch (e) {
+            console.error(e);
+            fetchRecruits(); // Revert on error
+        }
+    };
+
+    const handleDeleteRecruit = async (id) => {
+        if (!confirm('Are you sure you want to delete this recruit?')) return;
+        try {
+            await fetch(`/api/recruitments?id=${id}`, { method: 'DELETE' });
+            fetchRecruits();
+        } catch (e) {
+            alert('Error deleting');
         }
     };
 
@@ -152,60 +206,30 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             </header>
 
             <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-                {/* Monthly Goals Section */}
-                <div className="clean-card" style={{ marginBottom: '2rem', padding: '1.5rem', borderLeft: '4px solid #8b5cf6' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>Monthly Goals ({date.slice(0, 7)})</h3>
-                    </div>
-                    {monthlyTarget ? (
-                        <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-                            <div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>New Business Target</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{formatCurrency(monthlyTarget.new_business_target || 0)}</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Renewal Target</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{formatCurrency(monthlyTarget.renewal_target || 0)}</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Renewal Collected</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>{formatCurrency(monthlyTarget.renewal_collected || 0)}</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Pending Renewal</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f59e0b' }}>
-                                    {formatCurrency(Math.max(0, (monthlyTarget.renewal_target || 0) - (monthlyTarget.renewal_collected || 0)))}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                            No monthly targets set for this month.
-                        </div>
-                    )}
-                </div>
 
-                {/* Daily Performance KPI */}
-                <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Today's Target (Plan)</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                            {record.morning_plan ? 'SET' : 'PENDING'}
+                {/* KPI Grid (Only show on Plan/Achievement tabs) */}
+                {activeTab !== 'recruitment' && activeTab !== 'history' && (
+                    <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                        <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Today's Target (Plan)</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                                {record.morning_plan ? 'SET' : 'PENDING'}
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                                {record.morning_plan ? record.morning_plan : 'Please enter your plan for today'}
+                            </p>
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem', fontStyle: 'italic' }}>
-                            {record.morning_plan ? record.morning_plan : 'Please enter your plan for today'}
-                        </p>
+                        <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Achievement Today (LKR)</div>
+                            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>
+                                {formatCurrency(parseFloat(record.actual_business) || 0)}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+                                Status: <span style={{ color: (parseFloat(record.actual_business) > 0) ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{(parseFloat(record.actual_business) > 0) ? 'Achievement Recorded' : 'Awaiting Evening Update'}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Achievement Today (LKR)</div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>
-                            {formatCurrency(parseFloat(record.actual_business) || 0)}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                            Status: <span style={{ color: (parseFloat(record.actual_business) > 0) ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{(parseFloat(record.actual_business) > 0) ? 'Achievement Recorded' : 'Awaiting Evening Update'}</span>
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 {/* Tabs */}
                 <div className="nav-tabs">
@@ -213,13 +237,19 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                         className={`nav-tab ${activeTab === 'plan' ? 'active' : ''}`}
                         onClick={() => setActiveTab('plan')}
                     >
-                        <Sun size={18} /> Morning - Plan
+                        <Sun size={18} /> Plan
                     </button>
                     <button
                         className={`nav-tab ${activeTab === 'achievement' ? 'active' : ''}`}
                         onClick={() => setActiveTab('achievement')}
                     >
-                        <Moon size={18} /> Evening - Achievement
+                        <Moon size={18} /> Achievement
+                    </button>
+                    <button
+                        className={`nav-tab ${activeTab === 'recruitment' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('recruitment')}
+                    >
+                        <UserPlus size={18} /> Recruitment
                     </button>
                     <button
                         className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
@@ -236,15 +266,157 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                             {activeTab === 'plan' && 'Morning Session - Plan Entry'}
                             {activeTab === 'achievement' && 'Evening Session - Achievement'}
                             {activeTab === 'history' && 'Performance History'}
+                            {activeTab === 'recruitment' && 'Recruitment Tracker'}
                         </h2>
                         <p className="text-muted">
                             {activeTab === 'plan' && 'What is your target for today?'}
                             {activeTab === 'achievement' && 'Update your actual business figures'}
                             {activeTab === 'history' && 'Your past performance records'}
+                            {activeTab === 'recruitment' && 'Manage your new recruits and their onboarding status'}
                         </p>
                     </div>
 
-                    {activeTab !== 'history' ? (
+                    {activeTab === 'recruitment' ? (
+                        <div style={{ padding: '0 1rem' }}>
+                            {/* Add Recruit Form */}
+                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '12px', border: '1px dashed var(--border)', marginBottom: '2rem' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)' }}>Add New Recruit</h3>
+                                <form onSubmit={handleAddRecruit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Full Name</label>
+                                        <input
+                                            className="clean-input"
+                                            placeholder="e.g. Sunil Perera"
+                                            value={newRecruit.recruit_name}
+                                            onChange={(e) => setNewRecruit({ ...newRecruit, recruit_name: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Contact No</label>
+                                        <input
+                                            className="clean-input"
+                                            placeholder="07X XXX XXXX"
+                                            value={newRecruit.contact_no}
+                                            onChange={(e) => setNewRecruit({ ...newRecruit, contact_no: e.target.value })}
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="btn-primary"
+                                        disabled={addingRecruit}
+                                        style={{ height: '42px' }}
+                                    >
+                                        {addingRecruit ? 'Adding...' : '+ Add Recruit'}
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Recruits List */}
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                {recruits.map(recruit => (
+                                    <div key={recruit.id} className="clean-card" style={{ padding: '1.5rem', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                            <div>
+                                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>{recruit.recruit_name}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                                    <Phone size={14} /> {recruit.contact_no || 'No Contact'}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteRecruit(recruit.id)}
+                                                style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                                                title="Delete Recruit"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+
+                                        {/* Status Checklist */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '0.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: '8px' }}>
+                                            {[
+                                                { key: 'status_file_submitted', label: 'File Submitted' },
+                                                { key: 'status_exam_passed', label: 'Exam Passed' },
+                                                { key: 'status_documents_complete', label: 'Docs Complete' },
+                                                { key: 'status_appointed', label: 'Appointed' }
+                                            ].map(stage => (
+                                                <label key={stage.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                    <div
+                                                        onClick={() => toggleRecruitStatus(recruit.id, stage.key, recruit[stage.key])}
+                                                        style={{
+                                                            width: '20px',
+                                                            height: '20px',
+                                                            borderRadius: '4px',
+                                                            border: recruit[stage.key] ? '2px solid #10b981' : '2px solid var(--text-muted)',
+                                                            background: recruit[stage.key] ? '#10b981' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {recruit[stage.key] && <CheckSquare size={14} color="white" />}
+                                                    </div>
+                                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: recruit[stage.key] ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                                                        {stage.label}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                                {recruits.length === 0 && (
+                                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                                        No recruits added yet.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : activeTab === 'history' ? (
+                        <div className="table-container">
+                            <table className="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Morning Plan</th>
+                                        <th>Achievement</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {history.map((h, i) => (
+                                        <tr key={i}>
+                                            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{h.date}</td>
+                                            <td style={{ color: 'var(--text-muted)', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.morning_plan || '-'}</td>
+                                            <td style={{ fontWeight: 700, color: h.actual_business > 0 ? '#059669' : 'var(--text-muted)' }}>
+                                                {formatCurrency(h.actual_business || 0)}
+                                            </td>
+                                            <td>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.25rem 0.6rem',
+                                                    borderRadius: '12px',
+                                                    background: h.actual_business ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-input)',
+                                                    color: h.actual_business ? '#059669' : 'var(--text-muted)',
+                                                    fontWeight: 700,
+                                                    textTransform: 'uppercase',
+                                                    border: h.actual_business ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border)'
+                                                }}>
+                                                    {h.actual_business ? 'Completed' : 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {history.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No records found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        // Plan Or Achievement View
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                             <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                                 <div>
@@ -308,49 +480,6 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                                     {saving ? 'Saving...' : 'Save Record'}
                                 </button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="table-container">
-                            <table className="clean-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Morning Plan</th>
-                                        <th>Achievement</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {history.map((h, i) => (
-                                        <tr key={i}>
-                                            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{h.date}</td>
-                                            <td style={{ color: 'var(--text-muted)', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.morning_plan || '-'}</td>
-                                            <td style={{ fontWeight: 700, color: h.actual_business > 0 ? '#059669' : 'var(--text-muted)' }}>
-                                                {formatCurrency(h.actual_business || 0)}
-                                            </td>
-                                            <td>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    padding: '0.25rem 0.6rem',
-                                                    borderRadius: '12px',
-                                                    background: h.actual_business ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-input)',
-                                                    color: h.actual_business ? '#059669' : 'var(--text-muted)',
-                                                    fontWeight: 700,
-                                                    textTransform: 'uppercase',
-                                                    border: h.actual_business ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border)'
-                                                }}>
-                                                    {h.actual_business ? 'Completed' : 'Pending'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {history.length === 0 && (
-                                        <tr>
-                                            <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No records found</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
                         </div>
                     )}
                 </div>
