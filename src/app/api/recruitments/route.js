@@ -1,29 +1,84 @@
+/**
+ * EXAMPLE: Protected API Route Implementation
+ * 
+ * This shows how to use the authentication middleware to protect your API routes.
+ * You can apply this pattern to all sensitive API routes.
+ */
 
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+// Uncomment to enable authentication:
+// import { requireAuth, requireRole, rateLimit } from '@/middleware/auth';
 
 export const dynamic = 'force-dynamic';
+
+// EXAMPLE 1: Basic Authentication
+// Wrap your handler with requireAuth to ensure user is logged in
+/*
+export const GET = requireAuth(async function(request) {
+    // request.user is now available with user data
+    const userId = request.user.id;
+    
+    // Your logic here...
+});
+*/
+
+// EXAMPLE 2: Role-Based Access Control
+// Only allow admin and zonal_manager to access
+/*
+export const GET = requireRole(['admin', 'zonal_manager'])(async function(request) {
+    // Only admins and zonal managers can reach here
+    const userRole = request.user.role;
+    
+    // Your logic here...
+});
+*/
+
+// EXAMPLE 3: Rate Limiting
+// Limit to 100 requests per 15 minutes
+/*
+export const GET = rateLimit(100, 15 * 60 * 1000)(async function(request) {
+    // Rate limited endpoint
+    
+    // Your logic here...
+});
+*/
+
+// EXAMPLE 4: Combine Multiple Protections
+/*
+export const POST = rateLimit(50, 15 * 60 * 1000)(
+    requireRole(['admin', 'zonal_manager'])(
+        async function(request) {
+            // This endpoint is:
+            // 1. Rate limited (50 requests per 15 min)
+            // 2. Requires authentication
+            // 3. Requires admin or zonal_manager role
+            
+            // Your logic here...
+        }
+    )
+);
+*/
+
+// Current implementation (UNPROTECTED - for backward compatibility)
+// To enable protection, uncomment the middleware imports and wrap handlers
 
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const zone = searchParams.get('zone');
     const branch = searchParams.get('branch');
-    const type = searchParams.get('type'); // 'all' for admin
 
     if (!supabase) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
 
-    // Base Query: Select recruits and JOIN with user details to filter by Zone/Branch
     let query = supabase.from('recruitments').select(`
         *,
         users!inner (username, role, zone, branch)
     `).order('created_at', { ascending: false });
 
-    // Filters
     if (userId) {
         query = query.eq('user_id', userId);
     } else {
-        // Only apply zone/branch filters if not filtering by specific user
         if (zone) query = query.eq('users.zone', zone);
         if (branch) query = query.eq('users.branch', branch);
     }
