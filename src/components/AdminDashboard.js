@@ -16,6 +16,8 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         return localTime.toISOString().split('T')[0];
     };
 
+
+    const [viewMode, setViewMode] = useState('business'); // 'business' or 'recruitment'
     const [tab, setTab] = useState('zone'); // summary (previously zone), users, recruitment
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -30,14 +32,14 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
     const [recruits, setRecruits] = useState([]);
 
     useEffect(() => {
-        if (tab === 'users') {
-            fetchUsers();
-        } else if (tab === 'recruitment') {
+        if (viewMode === 'recruitment') {
             fetchRecruits();
+        } else if (tab === 'users') {
+            fetchUsers();
         } else {
             fetchStats();
         }
-    }, [tab, filterDate]);
+    }, [tab, filterDate, viewMode]);
 
     const fetchStats = async () => {
         setLoading(true);
@@ -226,7 +228,51 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                     </button>
 
+
+                    {/* View Mode Toggle */}
+                    <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '0.25rem', marginRight: '1rem' }}>
+                        <button
+                            onClick={() => setViewMode('business')}
+                            style={{
+                                padding: '0.4rem 1rem',
+                                borderRadius: '16px',
+                                border: 'none',
+                                background: viewMode === 'business' ? 'var(--accent-blue)' : 'transparent',
+                                color: viewMode === 'business' ? '#fff' : 'var(--text-muted)',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <BarChart2 size={16} /> Business
+                        </button>
+                        <button
+                            onClick={() => setViewMode('recruitment')}
+                            style={{
+                                padding: '0.4rem 1rem',
+                                borderRadius: '16px',
+                                border: 'none',
+                                background: viewMode === 'recruitment' ? '#10b981' : 'transparent',
+                                color: viewMode === 'recruitment' ? '#fff' : 'var(--text-muted)',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Users size={16} /> Recruitment
+                        </button>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
+
                         <Shield size={16} />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                             {user.role === 'viewer_admin' ? 'Viewer Admin' : 'System Admin'}
@@ -248,25 +294,27 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
 
-                {/* Tabs */}
-                <div className="nav-tabs">
-                    <button onClick={() => setTab('zone')} className={`nav-tab ${tab === 'zone' ? 'active' : ''}`}>
-                        <BarChart2 size={18} /> Zone-wise Summary
-                    </button>
-                    {(user.role === 'admin' || user.role === 'head' || user.role === 'zonal_manager') && (
-                        <button onClick={() => setTab('recruitment')} className={`nav-tab ${tab === 'recruitment' ? 'active' : ''}`}>
-                            <Users size={18} /> Recruitment
-                        </button>
-                    )}
-                    {(user.role === 'admin' || user.role === 'head') && (
-                        <button onClick={() => setTab('users')} className={`nav-tab ${tab === 'users' ? 'active' : ''}`}>
-                            <Settings size={18} /> Manage Users
-                        </button>
-                    )}
-                </div>
 
-                {/* Conditional Date Picker - Hide on Recruitment Tab too */}
-                {tab !== 'users' && tab !== 'recruitment' && (
+                {/* Tabs - Only for Business View */}
+                {viewMode === 'business' && (
+                    <div className="nav-tabs">
+                        <button onClick={() => setTab('zone')} className={`nav-tab ${tab === 'zone' ? 'active' : ''}`}>
+                            <BarChart2 size={18} /> Zone-wise Summary
+                        </button>
+                        <button onClick={() => setTab('branch')} className={`nav-tab ${tab === 'branch' ? 'active' : ''}`}>
+                            <MapPin size={18} /> Branch-wise
+                        </button>
+                        {(user.role === 'admin' || user.role === 'head') && (
+                            <button onClick={() => setTab('users')} className={`nav-tab ${tab === 'users' ? 'active' : ''}`}>
+                                <Settings size={18} /> Manage Users
+                            </button>
+                        )}
+                    </div>
+                )}
+
+
+                {/* Date Picker - Only for Business View */}
+                {viewMode === 'business' && tab !== 'users' && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-card)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                             <Calendar size={18} color="var(--text-muted)" />
@@ -280,7 +328,8 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                     </div>
                 )}
 
-                {tab === 'recruitment' ? (
+
+                {viewMode === 'recruitment' ? (
                     <div className="clean-card animate-fade-in">
                         <div className="card-header-accent">
                             <h2 className="text-h2">Recruitment Pipeline</h2>
