@@ -331,9 +331,44 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
                 {viewMode === 'recruitment' ? (
                     <div className="clean-card animate-fade-in">
-                        <div className="card-header-accent">
-                            <h2 className="text-h2">Recruitment Pipeline</h2>
-                            <p className="text-muted">Track new agent onboarding progress across all zones</p>
+                        <div className="card-header-accent" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h2 className="text-h2">Recruitment Pipeline</h2>
+                                <p className="text-muted">Track new agent onboarding progress across all zones</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    // Generate CSV
+                                    const headers = ['Recruit Name', 'Contact', 'Recruiter', 'Zone', 'Branch', 'File Submitted', 'Exam Passed', 'Docs Complete', 'Appointed', 'Code Issued', 'Status'];
+                                    const rows = recruits.map(r => {
+                                        const isComplete = r.date_file_submitted && r.date_exam_passed && r.date_documents_complete && r.date_appointed && r.date_code_issued;
+                                        return [
+                                            r.recruit_name,
+                                            r.contact_no || '-',
+                                            r.users?.username || '-',
+                                            r.users?.zone || '-',
+                                            r.users?.branch || '-',
+                                            r.date_file_submitted || '-',
+                                            r.date_exam_passed || '-',
+                                            r.date_documents_complete || '-',
+                                            r.date_appointed || '-',
+                                            r.date_code_issued || '-',
+                                            isComplete ? 'COMPLETED' : 'PENDING'
+                                        ];
+                                    });
+                                    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+                                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `recruitment_data_${new Date().toISOString().split('T')[0]}.csv`;
+                                    a.click();
+                                }}
+                                className="btn-primary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                            >
+                                <Save size={16} /> Download CSV
+                            </button>
                         </div>
                         <div className="table-container">
                             <table className="clean-table">
