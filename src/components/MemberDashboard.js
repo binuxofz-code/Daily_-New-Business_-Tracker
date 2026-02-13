@@ -12,7 +12,9 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         return localTime.toISOString().split('T')[0];
     };
 
-    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history, recruitment
+
+    const [viewMode, setViewMode] = useState('business'); // 'business', 'recruitment'
+    const [activeTab, setActiveTab] = useState('plan'); // plan, achievement, history
     const [date, setDate] = useState(getSLDate());
     const [record, setRecord] = useState({ morning_plan: '', actual_business: '' });
     const [loading, setLoading] = useState(false);
@@ -25,10 +27,13 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
     const [addingRecruit, setAddingRecruit] = useState(false);
 
     useEffect(() => {
-        fetchRecord();
-        if (activeTab === 'history') fetchHistory();
-        if (activeTab === 'recruitment') fetchRecruits();
-    }, [date, activeTab]);
+        if (viewMode === 'recruitment') {
+            fetchRecruits();
+        } else {
+            fetchRecord();
+            if (activeTab === 'history') fetchHistory();
+        }
+    }, [date, activeTab, viewMode]);
 
     const fetchRecord = async () => {
         setLoading(true);
@@ -183,7 +188,51 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                     </button>
 
+
+                    {/* View Mode Toggle */}
+                    <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '0.25rem', marginRight: '1rem' }}>
+                        <button
+                            onClick={() => setViewMode('business')}
+                            style={{
+                                padding: '0.4rem 1rem',
+                                borderRadius: '16px',
+                                border: 'none',
+                                background: viewMode === 'business' ? 'var(--accent-blue)' : 'transparent',
+                                color: viewMode === 'business' ? '#fff' : 'var(--text-muted)',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <BarChart2 size={16} /> Business
+                        </button>
+                        <button
+                            onClick={() => setViewMode('recruitment')}
+                            style={{
+                                padding: '0.4rem 1rem',
+                                borderRadius: '16px',
+                                border: 'none',
+                                background: viewMode === 'recruitment' ? '#10b981' : 'transparent',
+                                color: viewMode === 'recruitment' ? '#fff' : 'var(--text-muted)',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <UserPlus size={16} /> Recruitment
+                        </button>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
+
                         <User size={16} />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Team Member</span>
                     </div>
@@ -207,8 +256,9 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
 
             <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
 
-                {/* KPI Grid (Only show on Plan/Achievement tabs) */}
-                {activeTab !== 'recruitment' && activeTab !== 'history' && (
+
+                {/* KPI Grid (Only show on Business View) */}
+                {viewMode === 'business' && activeTab !== 'history' && (
                     <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                         <div className="clean-card" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Today's Target (Plan)</div>
@@ -231,52 +281,49 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                     </div>
                 )}
 
-                {/* Tabs */}
-                <div className="nav-tabs">
-                    <button
-                        className={`nav-tab ${activeTab === 'plan' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('plan')}
-                    >
-                        <Sun size={18} /> Plan
-                    </button>
-                    <button
-                        className={`nav-tab ${activeTab === 'achievement' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('achievement')}
-                    >
-                        <Moon size={18} /> Achievement
-                    </button>
-                    <button
-                        className={`nav-tab ${activeTab === 'recruitment' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('recruitment')}
-                    >
-                        <UserPlus size={18} /> Recruitment
-                    </button>
-                    <button
-                        className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('history')}
-                    >
-                        <BarChart2 size={18} /> History
-                    </button>
-                </div>
+                {/* Tabs - Only for Business View */}
+                {viewMode === 'business' && (
+                    <div className="nav-tabs">
+                        <button
+                            className={`nav-tab ${activeTab === 'plan' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('plan')}
+                        >
+                            <Sun size={18} /> Plan
+                        </button>
+                        <button
+                            className={`nav-tab ${activeTab === 'achievement' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('achievement')}
+                        >
+                            <Moon size={18} /> Achievement
+                        </button>
+                        <button
+                            className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('history')}
+                        >
+                            <BarChart2 size={18} /> History
+                        </button>
+                    </div>
+                )}
+
 
                 {/* Content */}
                 <div className="clean-card animate-fade-in">
                     <div className="card-header-accent">
                         <h2 className="text-h2">
-                            {activeTab === 'plan' && 'Morning Session - Plan Entry'}
-                            {activeTab === 'achievement' && 'Evening Session - Achievement'}
-                            {activeTab === 'history' && 'Performance History'}
-                            {activeTab === 'recruitment' && 'Recruitment Tracker'}
+                            {viewMode === 'recruitment' && 'Recruitment Tracker'}
+                            {viewMode === 'business' && activeTab === 'plan' && 'Morning Session - Plan Entry'}
+                            {viewMode === 'business' && activeTab === 'achievement' && 'Evening Session - Achievement'}
+                            {viewMode === 'business' && activeTab === 'history' && 'Performance History'}
                         </h2>
                         <p className="text-muted">
-                            {activeTab === 'plan' && 'What is your target for today?'}
-                            {activeTab === 'achievement' && 'Update your actual business figures'}
-                            {activeTab === 'history' && 'Your past performance records'}
-                            {activeTab === 'recruitment' && 'Manage your new recruits and their onboarding status'}
+                            {viewMode === 'recruitment' && 'Manage your new recruits and their onboarding status'}
+                            {viewMode === 'business' && activeTab === 'plan' && 'What is your target for today?'}
+                            {viewMode === 'business' && activeTab === 'achievement' && 'Update your actual business figures'}
+                            {viewMode === 'business' && activeTab === 'history' && 'Your past performance records'}
                         </p>
                     </div>
 
-                    {activeTab === 'recruitment' ? (
+                    {viewMode === 'recruitment' ? (
                         <div style={{ padding: '0 1rem' }}>
                             {/* Add Recruit Form */}
                             <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '12px', border: '1px dashed var(--border)', marginBottom: '2rem' }}>
