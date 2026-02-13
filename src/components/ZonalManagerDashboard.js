@@ -194,7 +194,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
             <header className="dashboard-header" style={{ background: 'var(--bg-card)' }}>
                 <div>
                     <h1 className="text-h1">Daily Business Tracker</h1>
-                    <p className="text-muted">Zone-wise New Business Management System</p>
+                    <p className="text-muted">{viewMode === 'business' ? 'Zone-wise New Business Management System' : 'Recruitment Tracker System'}</p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>

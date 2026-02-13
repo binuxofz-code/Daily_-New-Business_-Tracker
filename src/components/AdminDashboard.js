@@ -216,7 +216,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
             <header className="dashboard-header" style={{ background: 'var(--bg-card)' }}>
                 <div>
                     <h1 className="text-h1">Daily Business Tracker</h1>
-                    <p className="text-muted">Administrator Dashboard</p>
+                    <p className="text-muted">{viewMode === 'business' ? 'New Business Management System' : 'Recruitment Tracker System'}</p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
