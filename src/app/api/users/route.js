@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
     try {
-        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
         // Fetch all members (and zonal managers if needed) to manage
-        const users = db.prepare('SELECT id, username, role, zone, branch, managed_locations FROM users ORDER BY username ASC').all();
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('id, username, role, zone, branch, managed_locations')
+            .order('username', { ascending: true });
+
+        if (error) throw error;
 
         return NextResponse.json(users);
     } catch (error) {
@@ -20,20 +25,20 @@ export async function PUT(request) {
     try {
         const { id, role, zone, branch, managed_locations } = await request.json();
 
-        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
-        const updates = [];
-        const params = [];
+        const updates = {};
+        if (role !== undefined) updates.role = role;
+        if (zone !== undefined) updates.zone = zone;
+        if (branch !== undefined) updates.branch = branch;
+        if (managed_locations !== undefined) updates.managed_locations = managed_locations;
 
-        if (role !== undefined) { updates.push('role = ?'); params.push(role); }
-        if (zone !== undefined) { updates.push('zone = ?'); params.push(zone); }
-        if (branch !== undefined) { updates.push('branch = ?'); params.push(branch); }
-        if (managed_locations !== undefined) { updates.push('managed_locations = ?'); params.push(managed_locations); }
+        const { error } = await supabase
+            .from('users')
+            .update(updates)
+            .eq('id', id);
 
-        if (updates.length > 0) {
-            params.push(id);
-            db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
-        }
+        if (error) throw error;
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -47,11 +52,14 @@ export async function DELETE(request) {
         const id = searchParams.get('id');
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+        if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
-        const info = db.prepare('DELETE FROM users WHERE id = ?').run(id);
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', id);
 
-        if (info.changes === 0) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        if (error) throw error;
 
         return NextResponse.json({ success: true });
     } catch (error) {

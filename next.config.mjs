@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverComponentsExternalPackages: ['better-sqlite3'],
+  /* config options here */
 };
 
 export default nextConfig;

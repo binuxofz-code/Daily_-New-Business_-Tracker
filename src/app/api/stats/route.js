@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,27 +10,28 @@ export async function GET(request) {
     const zoneQuery = searchParams.get('zone');
 
     if (!date) return NextResponse.json({ error: 'Date required' }, { status: 400 });
-    if (!db) return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+    if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
 
     try {
-        const query = `
-            SELECT 
-                r.*,
-                u.username, u.role, u.zone as user_zone, u.branch as user_branch
-            FROM daily_records r
-            LEFT JOIN users u ON r.user_id = u.id
-            WHERE r.date = ?
-        `;
-        const records = db.prepare(query).all(date);
+        let query = supabase.from('daily_records').select(`
+            *,
+            users (username, role, zone, branch)
+        `).eq('date', date);
+
+        const { data: records, error } = await query;
+        if (error) throw error;
 
         // Improve Data Shape
-        const augmentedRecords = records.map(r => ({
-            ...r,
-            // Prefer record's zone/branch, fallback to user's
-            zone: r.zone || r.user_zone || 'Unknown',
-            branch: r.branch || r.user_branch || 'Unknown',
-            role: r.role
-        }));
+        const augmentedRecords = records.map(r => {
+            const u = r.users || {};
+            return {
+                ...r,
+                // Prefer record's zone/branch, fallback to user's
+                zone: r.zone || u.zone || 'Unknown',
+                branch: r.branch || u.branch || 'Unknown',
+                role: r.role || u.role
+            };
+        });
 
         // Filter
         const filtered = zoneQuery
@@ -43,9 +44,6 @@ export async function GET(request) {
                 const z = r.zone;
                 if (!groups[z]) groups[z] = { zone: z, branches: 0, plan: 0, agent_achievement: 0, bdo_branch_performance: 0, total_business: 0 };
                 groups[z].branches++;
-                // Use zone_plan if typically one record per zone per day in new system, else sum branch_plans
-                // In new simplification, we have ONE record per zone with zone_plan.
-                // So summing needs care if there are duplicate records. Assuming one record per zone-branch or zone.
                 groups[z].plan += (parseFloat(r.zone_plan) || parseFloat(r.branch_plan) || 0);
                 groups[z].agent_achievement += (parseFloat(r.agent_achievement) || 0);
                 groups[z].bdo_branch_performance += (parseFloat(r.bdo_branch_performance) || 0);
