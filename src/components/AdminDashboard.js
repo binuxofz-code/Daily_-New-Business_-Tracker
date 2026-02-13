@@ -16,7 +16,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         return localTime.toISOString().split('T')[0];
     };
 
-    const [tab, setTab] = useState('overview'); // overview, zone, branch, users
+    const [tab, setTab] = useState('zone'); // summary (previously zone), users
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterDate, setFilterDate] = useState(getSLDate());
@@ -257,14 +257,8 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
                 {/* Tabs */}
                 <div className="nav-tabs">
-                    <button onClick={() => setTab('overview')} className={`nav-tab ${tab === 'overview' ? 'active' : ''}`}>
-                        <BarChart2 size={18} /> Overview
-                    </button>
                     <button onClick={() => setTab('zone')} className={`nav-tab ${tab === 'zone' ? 'active' : ''}`}>
-                        <MapPin size={18} /> Zone Performance
-                    </button>
-                    <button onClick={() => setTab('branch')} className={`nav-tab ${tab === 'branch' ? 'active' : ''}`}>
-                        <Briefcase size={18} /> Branch Performance
+                        <BarChart2 size={18} /> Zone-wise Summary
                     </button>
                     {(user.role === 'admin' || user.role === 'head') && (
                         <button onClick={() => setTab('users')} className={`nav-tab ${tab === 'users' ? 'active' : ''}`}>
@@ -485,7 +479,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                         {/* Data Table */}
                         <div className="clean-card animate-fade-in">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 className="text-h2">Detailed Performance Breakdown</h3>
+                                <h3 className="text-h2">Zone Performance Summary</h3>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                     <span>Showing {data.length} records for {filterDate}</span>
                                     <button
@@ -501,51 +495,60 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 <table className="clean-table">
                                     <thead>
                                         <tr>
-                                            <th>{tab === 'zone' ? 'Zone' : (tab === 'branch' ? 'Branch' : 'Agent')}</th>
-                                            <th>Target (Plan)</th>
-                                            <th>Agent Achievement</th>
-                                            <th>Branch Achievement</th>
-                                            <th style={{ textAlign: 'right' }}>Total Combined</th>
-                                            {tab === 'overview' && user.role !== 'viewer_admin' && <th>Action</th>}
+                                            <th>Location (Zone)</th>
+                                            <th style={{ textAlign: 'right' }}>Target (Plan)</th>
+                                            <th style={{ textAlign: 'right' }}>Achievement</th>
+                                            <th style={{ textAlign: 'center' }}>Efficiency</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {data.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                                                    {tab === 'zone' ? `📍 ${item.zone}` : (tab === 'branch' ? `🏢 ${item.branch}` : (
-                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <span>👤 {item.username}</span>
-                                                            {item.role === 'zonal_manager' && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>🏢 {item.branch} (ZM)</span>}
-                                                        </div>
-                                                    ))}
+                                                    📍 {item.zone}
                                                 </td>
-                                                <td style={{ color: 'var(--text-muted)' }}>
+                                                <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>
                                                     {formatCurrency(item.plan || item.morning_plan || 0)}
                                                 </td>
-                                                <td style={{ color: '#059669', fontWeight: 600 }}>
-                                                    {formatCurrency(item.agent_achievement || 0)}
-                                                </td>
-                                                <td style={{ color: '#0284c7', fontWeight: 600 }}>
-                                                    {formatCurrency(item.bdo_branch_performance || 0)}
-                                                </td>
-                                                <td style={{ fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '1.05rem' }}>
+                                                <td style={{ textAlign: 'right', color: '#059669', fontWeight: 800 }}>
                                                     {formatCurrency(item.total_business || item.actual_business || 0)}
                                                 </td>
-                                                {tab === 'overview' && user.role !== 'viewer_admin' && (
-                                                    <td style={{ textAlign: 'center' }}>
-                                                        <button
-                                                            onClick={() => handleDeleteRecord(item.id)}
-                                                            style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }}
-                                                            title="Delete Record"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </td>
-                                                )}
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                                        <div style={{ background: 'var(--border)', width: '60px', height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
+                                                            <div style={{
+                                                                background: '#3b82f6',
+                                                                width: `${Math.min(100, (item.plan || item.morning_plan) > 0 ? ((item.total_business || item.actual_business) / (item.plan || item.morning_plan)) * 100 : 0)}%`,
+                                                                height: '100%'
+                                                            }} />
+                                                        </div>
+                                                        <span style={{ fontWeight: 700, color: '#3b82f6', fontSize: '0.8rem' }}>
+                                                            {(item.plan || item.morning_plan) > 0 ? (((item.total_business || item.actual_business) / (item.plan || item.morning_plan)) * 100).toFixed(1) : 0}%
+                                                        </span>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
-                                        {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No records found for this date.</td></tr>}
+                                        {/* Summary Row */}
+                                        {data.length > 0 && (
+                                            <tr style={{ background: 'rgba(59, 130, 246, 0.05)', fontWeight: 800 }}>
+                                                <td style={{ color: 'var(--accent-blue)' }}>GRAND TOTAL (ALL ZONES)</td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    {formatCurrency(data.reduce((sum, item) => sum + (parseFloat(item.plan) || 0), 0))}
+                                                </td>
+                                                <td style={{ textAlign: 'right', color: '#059669', fontSize: '1.2rem' }}>
+                                                    {formatCurrency(data.reduce((sum, item) => sum + (parseFloat(item.total_business) || 0), 0))}
+                                                </td>
+                                                <td style={{ textAlign: 'center', color: 'var(--accent-blue)' }}>
+                                                    {(() => {
+                                                        const totalPlan = data.reduce((sum, item) => sum + (parseFloat(item.plan) || 0), 0);
+                                                        const totalAch = data.reduce((sum, item) => sum + (parseFloat(item.total_business) || 0), 0);
+                                                        return totalPlan > 0 ? ((totalAch / totalPlan) * 100).toFixed(1) : 0;
+                                                    })()}%
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>No zone data found for this date.</td></tr>}
                                     </tbody>
                                 </table>
                             </div>
