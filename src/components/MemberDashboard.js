@@ -26,6 +26,8 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
     const [newRecruit, setNewRecruit] = useState({ recruit_name: '', nic: '', contact_no: '' });
     const [addingRecruit, setAddingRecruit] = useState(false);
 
+    const [error, setError] = useState(null);
+
     useEffect(() => {
         if (viewMode === 'recruitment') {
             fetchRecruits();
@@ -37,9 +39,13 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
 
     const fetchRecord = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
             const activeRecord = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
             if (activeRecord) {
@@ -49,6 +55,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             }
         } catch (e) {
             console.error(e);
+            setError(e.message);
         } finally {
             setLoading(false);
         }
@@ -58,9 +65,11 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         try {
             const res = await fetch(`/api/records?userId=${user.id}`);
             const data = await res.json();
+            if (data.error) throw new Error(data.error);
             setHistory(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error(e);
+            // setError(e.message); // Optional: don't block main UI for history error
         }
     };
 
@@ -68,9 +77,11 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
         try {
             const res = await fetch(`/api/recruitments?userId=${user.id}`);
             const data = await res.json();
+            if (data.error) throw new Error(data.error);
             setRecruits(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error(e);
+            setError(e.message);
         }
     };
 
@@ -138,9 +149,12 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
     };
 
     const toggleRecruitStatus = async (id, field, currentValue) => {
+        // Calculate new value: if currently checked (someting there), set to null. If null/false, set to current date.
+        const newValue = currentValue ? null : getSLDate();
+
         // Optimistic update
         const updatedRecruits = recruits.map(r =>
-            r.id === id ? { ...r, [field]: !currentValue } : r
+            r.id === id ? { ...r, [field]: newValue } : r
         );
         setRecruits(updatedRecruits);
 
@@ -148,7 +162,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
             await fetch('/api/recruitments', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, [field]: !currentValue })
+                body: JSON.stringify({ id, [field]: newValue })
             });
         } catch (e) {
             console.error(e);
@@ -173,6 +187,7 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
             {/* Header */}
+            {/* Header */}
             <header className="dashboard-header" style={{ background: 'var(--bg-card)' }}>
                 <div>
                     <h1 className="text-h1">Daily Business Tracker</h1>
@@ -187,7 +202,6 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                     >
                         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                     </button>
-
 
                     {/* View Mode Toggle */}
                     <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '0.25rem', marginRight: '1rem' }}>
@@ -254,7 +268,12 @@ export default function MemberDashboard({ user, onLogout, theme, toggleTheme }) 
                 </div>
             </header>
 
-            <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+                {error && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <strong>Error:</strong> {error}
+                    </div>
+                )}
 
 
                 {/* KPI Grid (Only show on Business View) */}

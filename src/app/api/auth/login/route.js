@@ -18,7 +18,23 @@ export async function POST(request) {
 
         if (error || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        const valid = await bcrypt.compare(password, user.password);
+        // Check password (bcrypt)
+        let valid = await bcrypt.compare(password, user.password);
+
+        // Fallback: Check plain text (for migration)
+        if (!valid && password === user.password) {
+            console.log(`Migrating password for user: ${username}`);
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Update user with hashed password
+            await supabase
+                .from('users')
+                .update({ password: hashedPassword })
+                .eq('id', user.id);
+
+            valid = true;
+        }
+
         if (!valid) return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
 
         const { password: _, ...userWithoutPassword } = user;

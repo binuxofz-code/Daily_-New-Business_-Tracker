@@ -17,32 +17,32 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
     };
 
 
-    const [viewMode, setViewMode] = useState('business'); // 'business' or 'recruitment'
-    const [tab, setTab] = useState('zone'); // summary (previously zone), users, recruitment
+    const [loading, setLoading] = useState(true);
+    const [allUsers, setAllUsers] = useState([]);
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [recruits, setRecruits] = useState([]);
     const [filterDate, setFilterDate] = useState(getSLDate());
+    const [tab, setTab] = useState('zone'); // zone, branch
+    const [viewMode, setViewMode] = useState('business');
+    const [error, setError] = useState(null);
 
     // User Management State
-    const [allUsers, setAllUsers] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
     const [editForm, setEditForm] = useState({ zone: '', branch: '', managed_locations: '[]' });
 
-    // Recruitment State
-    const [recruits, setRecruits] = useState([]);
 
     useEffect(() => {
         if (viewMode === 'recruitment') {
             fetchRecruits();
-        } else if (tab === 'users') {
-            fetchUsers();
         } else {
             fetchStats();
         }
-    }, [tab, filterDate, viewMode]);
+        fetchUsers();
+    }, [filterDate, tab, viewMode]);
 
     const fetchStats = async () => {
         setLoading(true);
+        setError(null);
         try {
             let url = `/api/stats?date=${filterDate}`;
             if (user.role === 'zonal_manager') {
@@ -53,10 +53,14 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
 
             const res = await fetch(url);
             const d = await res.json();
+
+            if (d.error) throw new Error(d.error);
+
             if (Array.isArray(d)) setData(d);
             else setData([]);
         } catch (e) {
             console.error(e);
+            setError(e.message);
             setData([]);
         } finally {
             setLoading(false);
@@ -64,20 +68,21 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
     };
 
     const fetchUsers = async () => {
-        setLoading(true);
+        // setError(null); // Don't reset main error for background fetch
         try {
             const res = await fetch('/api/users');
             const d = await res.json();
+            if (d.error) throw new Error(d.error);
             setAllUsers(Array.isArray(d) ? d : []);
         } catch (e) {
             console.error(e);
-        } finally {
-            setLoading(false);
+            // setError(e.message); // Maybe optional
         }
     };
 
     const fetchRecruits = async () => {
         setLoading(true);
+        setError(null);
         try {
             let url = '/api/recruitments?type=all';
             if (user.role === 'zonal_manager') {
@@ -85,9 +90,11 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
             }
             const res = await fetch(url);
             const d = await res.json();
+            if (d.error) throw new Error(d.error);
             setRecruits(Array.isArray(d) ? d : []);
         } catch (e) {
             console.error(e);
+            setError(e.message);
         } finally {
             setLoading(false);
         }
@@ -367,7 +374,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                 className="btn-primary"
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                             >
-                                <Save size={16} /> Download CSV
+                                <Download size={16} /> Download CSV
                             </button>
                         </div>
                         <div className="table-container">

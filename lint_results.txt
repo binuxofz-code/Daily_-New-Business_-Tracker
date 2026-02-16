@@ -1,0 +1,17 @@
+﻿
+> daily-tracker@0.1.0 lint
+> eslint
+
+
+C:\Users\Administrator\Desktop\Daily New Business Tracker\daily-tracker\src\components\AdminDashboard.js
+  42:8  warning  React Hook useEffect has missing dependencies: 'fetchRecruits' and 'fetchStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Administrator\Desktop\Daily New Business Tracker\daily-tracker\src\components\MemberDashboard.js
+   36:8    warning  React Hook useEffect has missing dependencies: 'fetchHistory', 'fetchRecord', and 'fetchRecruits'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  267:167  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                        react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Daily New Business Tracker\daily-tracker\src\components\ZonalManagerDashboard.js
+  42:8  warning  React Hook useEffect has missing dependencies: 'fetchRecords' and 'fetchRecruits'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+Γ£û 4 problems (1 error, 3 warnings)
+

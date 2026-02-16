@@ -19,6 +19,8 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    const [error, setError] = useState(null);
+
     // Recruitment State
     const [recruits, setRecruits] = useState([]);
     const [newRecruit, setNewRecruit] = useState({ recruit_name: '', nic: '', contact_no: '' });
@@ -43,9 +45,12 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
 
     const fetchRecords = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch(`/api/records?userId=${user.id}&date=${date}`);
             const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
 
             const recordsMap = {};
             if (Array.isArray(data)) {
@@ -59,6 +64,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
             setRecords(recordsMap);
         } catch (e) {
             console.error(e);
+            setError(e.message);
         } finally {
             setLoading(false);
         }
@@ -118,11 +124,17 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
 
     const fetchRecruits = async () => {
         try {
-            const res = await fetch(`/api/recruitments?userId=${user.id}`);
-            const data = await res.json();
-            setRecruits(Array.isArray(data) ? data : []);
+            let url = '/api/recruitments?type=all';
+            if (user.role === 'zonal_manager') {
+                url += `&zone=${user.zone}`;
+            }
+            const res = await fetch(url);
+            const d = await res.json();
+            if (d.error) throw new Error(d.error);
+            setRecruits(Array.isArray(d) ? d : []);
         } catch (e) {
             console.error(e);
+            setError(e.message);
         }
     };
 
@@ -188,6 +200,8 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
         return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(val);
     };
 
+    const handleLogout = onLogout;
+
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
             {/* Top Navigation Bar */}
@@ -250,25 +264,26 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'var(--accent-blue)' }}>
                         <Shield size={16} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Zonal Manager Access</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Zonal Manager</span>
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.username}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Managing {locations.length} Branches</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.zone}</div>
                     </div>
 
-                    <button
-                        onClick={onLogout}
-                        className="btn-secondary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
-                    >
+                    <button onClick={onLogout} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <LogOut size={16} /> Logout
                     </button>
                 </div>
             </header>
 
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+                {error && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <strong>Error:</strong> {error}
+                    </div>
+                )}
 
 
                 {/* Tabs - Only for Business View */}
