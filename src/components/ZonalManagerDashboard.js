@@ -158,11 +158,12 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                 fetchRecruits();
                 alert('Recruit added successfully!');
             } else {
-                alert('Failed to add recruit');
+                const errorData = await res.json();
+                alert(`Failed to add recruit: ${errorData.error || 'Unknown error'}`);
             }
         } catch (e) {
             console.error(e);
-            alert('Error adding recruit');
+            alert(`Error adding recruit: ${e.message}`);
         } finally {
             setAddingRecruit(false);
         }
