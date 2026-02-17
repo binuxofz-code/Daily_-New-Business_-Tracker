@@ -308,9 +308,10 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                         <button onClick={() => setTab('zone')} className={`nav-tab ${tab === 'zone' ? 'active' : ''}`}>
                             <BarChart2 size={18} /> Zone-wise Summary
                         </button>
-                        <button onClick={() => setTab('branch')} className={`nav-tab ${tab === 'branch' ? 'active' : ''}`}>
+                        {/* Branch tab removed as per request to focus on Zone-only allocation */}
+                        {/* <button onClick={() => setTab('branch')} className={`nav-tab ${tab === 'branch' ? 'active' : ''}`}>
                             <MapPin size={18} /> Branch-wise
-                        </button>
+                        </button> */}
                         {(user.role === 'admin' || user.role === 'head') && (
                             <button onClick={() => setTab('users')} className={`nav-tab ${tab === 'users' ? 'active' : ''}`}>
                                 <Settings size={18} /> Manage Users
@@ -505,7 +506,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                     u.role === 'zonal_manager' ? (
                                                         <div style={{ fontSize: '0.85rem' }}>
                                                             {/* User Mgmt: Edit Zone Allocations */}
-                                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Allocated Branches:</div>
+                                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Allocated Zones ({JSON.parse(editForm.managed_locations || '[]').length}):</div>
                                                             <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', marginBottom: '0.75rem', maxHeight: '150px', overflowY: 'auto', background: 'var(--bg-input)' }}>
                                                                 {(editForm.managed_locations ? JSON.parse(editForm.managed_locations) : []).map((loc, idx) => (
                                                                     <div key={idx} style={{
@@ -521,7 +522,9 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                                         <div>
                                                                             <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)', fontWeight: 700, textTransform: 'uppercase' }}>{loc.zone}</span>
                                                                             <span style={{ margin: '0 0.5rem', color: 'var(--text-muted)' }}>•</span>
-                                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>{loc.branch}</span>
+                                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>
+                                                                                {loc.branch === 'Total' ? 'Whole Zone' : loc.branch}
+                                                                            </span>
                                                                         </div>
                                                                         <button onClick={() => {
                                                                             const current = JSON.parse(editForm.managed_locations);
@@ -532,25 +535,22 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                                                 ))}
                                                             </div>
                                                             <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '10px', border: '1px dashed var(--accent-blue)', opacity: 0.9 }}>
-                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                                                    <div>
-                                                                        <input id={`z-${u.id}`} placeholder="Zone" className="clean-input" style={{ padding: '0.5rem', fontSize: '0.85rem' }} />
-                                                                    </div>
-                                                                    <div>
-                                                                        <input id={`b-${u.id}`} placeholder="Branch" className="clean-input" style={{ padding: '0.5rem', fontSize: '0.85rem' }} />
-                                                                    </div>
+                                                                <div style={{ marginBottom: '0.75rem' }}>
+                                                                    <input id={`z-${u.id}`} placeholder="Enter Zone Name (e.g. Zone A)" className="clean-input" style={{ padding: '0.5rem', fontSize: '0.85rem', width: '100%' }} />
                                                                 </div>
                                                                 <button onClick={() => {
                                                                     const z = document.getElementById(`z-${u.id}`).value;
-                                                                    const b = document.getElementById(`b-${u.id}`).value;
-                                                                    if (z && b) {
+                                                                    if (z) {
                                                                         const current = JSON.parse(editForm.managed_locations || '[]');
-                                                                        current.push({ zone: z, branch: b });
-                                                                        setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
-                                                                        document.getElementById(`b-${u.id}`).value = '';
-                                                                        document.getElementById(`z-${u.id}`).value = '';
+                                                                        if (current.some(loc => loc.zone === z)) {
+                                                                            alert('This zone is already allocated to this user.');
+                                                                        } else {
+                                                                            current.push({ zone: z, branch: 'Total' });
+                                                                            setEditForm({ ...editForm, managed_locations: JSON.stringify(current) });
+                                                                            document.getElementById(`z-${u.id}`).value = '';
+                                                                        }
                                                                     }
-                                                                }} className="btn-primary" style={{ padding: '0.5rem', fontSize: '0.85rem', height: 'auto' }}>+ Add</button>
+                                                                }} className="btn-primary" style={{ padding: '0.5rem', fontSize: '0.85rem', height: 'auto', width: '100%' }}>+ Add Zone</button>
                                                             </div>
                                                         </div>
                                                     ) : (

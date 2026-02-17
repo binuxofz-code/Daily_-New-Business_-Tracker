@@ -515,7 +515,7 @@ export default function ZonalManagerDashboard({ user, onLogout, theme, toggleThe
                                                             <div>
                                                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>📍 {zoneName}</h3>
                                                                 <p style={{ fontSize: '0.75rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
-                                                                    Includes: {branchesInZone.join(', ')}
+                                                                    {branchesInZone.some(b => b === 'Total') ? 'Full Zone Coverage' : `Includes: ${branchesInZone.join(', ')}`}
                                                                 </p>
                                                             </div>
                                                             {activeTab === 'summary' && (
