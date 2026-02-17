@@ -64,12 +64,17 @@ export const GET = requireAuth(async function (request) {
 // POST - Create recruit (Authenticated)
 export const POST = requireAuth(async function (request) {
     try {
+        if (!supabase) {
+            return NextResponse.json({ error: 'Database connection not initialized' }, { status: 500 });
+        }
+
         const body = await request.json();
 
         // Validate input
         const result = recruitSchema.safeParse(body);
         if (!result.success) {
-            return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
+            const errorMessage = result.error?.errors?.[0]?.message || result.error?.message || 'Validation failed';
+            return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
         const { recruit_name, nic, contact_no, notes } = result.data;
@@ -81,16 +86,20 @@ export const POST = requireAuth(async function (request) {
         const { data, error } = await supabase.from('recruitments').insert({
             user_id,
             recruit_name,
-            nic,
-            contact_no,
-            notes
+            nic: nic || null,
+            contact_no: contact_no || null,
+            notes: notes || null
         }).select().single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Database Error:', error);
+            throw new Error(error.message);
+        }
 
         return NextResponse.json(data);
     } catch (e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        console.error('API Error:', e);
+        return NextResponse.json({ error: e.message || 'Internal Server Error' }, { status: 500 });
     }
 });
 
